@@ -114,7 +114,7 @@ def run(model,train_config,train_iter,valid_iter,total_epoch,warmup,best_loss,sa
     print('Best Epoch: ',best_epoch)
     return model,train_losses,valid_losses,train_scores, valid_scores
 
-def test(model, iterator, criterion,device,scatter=True,**kwargs):
+def test_n_plot(model, iterator, criterion,device,scatter=True,**kwargs):
     model.eval()
     epoch_loss = 0
     Y_actual, Y_pred = list(),list()

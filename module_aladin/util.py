@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from functools import wraps
 from sklearn.model_selection import train_test_split
-
+from collections import defaultdict
 from module_aladin.data_process import concat_data
 
 def record_time(func):
@@ -56,3 +56,37 @@ def train_test_split_strat(X:pd.DataFrame,y:pd.Series,strat=None,method='order',
         data[x_ind],data[y_ind] = lists_append_together([data[x_ind],data[y_ind]],[res_Xs[0],res_ys[0]])
     
     return tuple(map(concat_data,data))
+
+def get_amp(data):
+  return {
+      'max-min' : data['max'] - data['min'],
+      'real-min' : data['real'] - data['min'],
+      'avg-min' : data['avg'] - data['min'],
+  }
+
+def get_vals_range(val,decrease=True):
+  moving_ds = pd.Series(val).rolling(10)
+  moving = {'max' : moving_ds.max().bfill().values,
+            'real': val,
+            'min' : moving_ds.min().bfill().values,
+            'avg' : moving_ds.mean().bfill().values}
+  if decrease : lim_range = {'max':np.array([np.max(val[i:]) for i in range(len(val)-1)]),
+                        'real':val[:-1],
+                        'min':np.array([np.min(val[:i+1]) for i in range(len(val)-1)])}
+  else : lim_range = {'max':np.array([np.max(val[:i+1]) for i in range(len(val)-1)]),
+                        'real':val[:-1],
+                        'min':np.array([np.min(val[i:]) for i in range(len(val)-1)])}
+  lim_range['avg'] = (lim_range['max']+lim_range['min'])/2
+  return moving, lim_range
+  
+def read_run_rslt(run_rslt):
+  lines = run_rslt.strip().split('\n')
+  data_line= lines[1::2]
+  data = [line.strip().split('\t') for line in data_line]
+  rslt = defaultdict(list)
+  for line in data:
+    for vals in line:
+      key,val= vals.strip().split(':')
+      rslt[key].append(float(val))
+
+  return rslt
