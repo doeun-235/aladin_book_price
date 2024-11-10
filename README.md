@@ -1,4 +1,4 @@
-# 알라딘 베스트셀러 데이터셋을 이용한 attention 기반 서적 가격 예측 모델
+# 알라딘 베스트셀러 데이터셋을 이용한 attention encoder 기반 서적 가격 예측 모델
 
 **사용된 스킬 셋**: NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, PyTorch, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
@@ -103,7 +103,7 @@
 - [저자 명](./research/240716_check_bookinfo2.ipynb)
   - 여러 명이 제작자로 기재된 경우, 맨 앞의 제작자만 남김
     - 여러 명이 기재되어 있었는지 여부를 Author_mul에 bool형태로 기록
-      - ex) "정홍섭 글 이준성 그림" -> "정홉섭 글", True
+      - ex) "김려원 글 김이후 그림" -> "김려원 글", True
   - 이름 뒤에 붙은 기타 문자열 처리
     - 역할에 대한 단어 : "글", "시", "역", "지음", "평역" 등 총 72가지
     - 다수의 사람이 참여했다는 의미의 단어
@@ -131,31 +131,35 @@
 
 ## 5. 모델 설계
 
+- **INPUT** : (*batch_size*, 64) / **OUTPUT** : (*batch_size*, 1)
+- self attention layer 기반의 encoder(이하 attention based encoder)에 Multilayer perceptron(이하 MLP)을 연장한 모델
+  - self attention layer는 행렬곱 및 내적의 연장이기 때문에, 병렬계산이 가능하고 parameter 수가 같다면 MLP에 비해 연산이 빠름
+  - attention layer를 적극적으로 이용한 Transformer는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
+  - 이번 과제도 단어가 나열됐을 때 형성되는 맥락과 관련되어 있다 이해할 수 있기 때문에, attention based encoder 모델이 효과적일 수 있을 것이라 예상
+- attention based encoder 내부에 Transformer에 사용된 encoder submodule을 N층 쌓고, 3층의 MLP를 연장함
+  - 단어에 대한 정수 encoding이 사용된 [0,60] 번째에 해당하는 tensor를 attention based encoder가 입력받음
+  - Embedding model이 *d_model* = 60 차원의 tenseor에 대응시킴
+  - 실험에 따라 다른 *head* 값의 multi head attention layer와 
+
 ## 6. 학습 및 평가 결과
 
 ### 개요
 
 - 모델 성능은 RMSE, MAPE, R2 Score 등을 활용하여 평가
-- Random Forest Regressor, XGBoost 모델 간의 성능을 비교
-  - XGBoost에 대해서는 GridSearchCV를 이용해 각 모델 별로 가장 높은 성능을 내는 hyper parameter 탐색
-- 모델 평가는 두 가지 방법으로 진행
-  - test1 : 초기에 test dataset으로 설정된 데이터셋
-    - 69,385종의 도서에 대한 중고도서 156,843건
-  - test2 : train set에 포함된 적 없는 도서에 대한 중고 매물로 제한한 데이터셋
-    - test set에서 4,984종의 도서에 대한 중고도서 5,968건
-- 판매가와 SalesPoint를 학습에서 제외시켜도 안정적인 성능이 나오는지 탐색
+- attention based encoder 모델 및 학습에서의 hyperparameter를 변경하며 학습 성능 평가
+  - **N** : encoder 내부에 쌓여있는 submodule의 개수
+    - 1,3,6,9에 대해서 실험 진행
+  - **batch size** : 256, 512, 4,096, 65,536에 대해서 실험 진행
+    - *learning rate* : batch size에 맞게 초기 learning rate를 정한 뒤 학습 상황에 따라 감소시켜 적용
+  - **head** : 3, 6, 12에 대해서 실험 진행
+- 모델 성능의 평가를 위해 XGBoost, Random Forest Regressor 모델, 간단한 MLP모델과 성능 비교
 
-#### 설계
-
-### [XGB 모델 학습 및 평가](./research/240721_hyperparameters_XGB.ipynb)
-
-#### 평가 기준
+### 평가 기준
 
 - metric : RMSE, MAPE, $R^2$ score
-- 각 metric에 대해 test1과 test2에서의 값에 조화 평균을 취한 값을 기준으로, 각 metric 별 순위를 매김
+- metric 별 성능에 가중치를 적용한 뒤 조화 평균으로 순위를 메김
   - 산술, 기하 평균에 비해 조화 평균은 값들 간의 차이가 크지 않은 것을 상대적으로 높게 평가
-  - training set에 포함됐는지 여부에 큰 차이 없이 고르게 잘 예측하는 모델을 목표로 하기 때문에 조화 평균을 사용
-- metric 별 성능 순위 간에 조화 평균을 구한 뒤 순위를 메겨, 실험 별로 각각 모델들의 순위 및 best model을 결정
+  - 세 metric에 대하여 고루 잘 예측하는 모델을 목표로 하기 때문에 조화 평균을 사용
 
 #### 모델 평가
 
@@ -250,3 +254,8 @@
 - 데이터를 보강하여 학습에 수월한 질 좋은 데이터셋 구성
   - 도서 정보 페이지에 포함되어 있는 가격에 영향을 주는 다른 정보(제본형태, 쪽수 등)를 추가적으로 크롤링
   - 베스트 셀러에 포함된 적 없는 도서도 대상으로 하기 위한 크롤링 방법 개발 필요
+
+## 10. 참고문헌
+
+- [VSPU17](https://arxiv.org/abs/1706.03762) : Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
+- (github link)
