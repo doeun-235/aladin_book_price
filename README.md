@@ -202,21 +202,6 @@
   |R2 SCORE|0.94074|0.94294|0.66289|
 
   *<b>도표.29</b> 각 실험 별 best model과 성능*
-  
-- feature importance 분석 결과를 바탕으로 중고가 예측에 정가, 도서 명, 중고 등급 등이 주요한 역할을 하는 것을 확인
-- 세일즈 포인트가 있을 때(Expt.1)가 없을 때(Expt.2, Expt.3)에 비해, default hyperparameter의 단순한 모델에서도 학습에서 본 적 없는 종류의 도서(test2)에 대해서도 예측 성능의 차이가 적었음
-  - default hyperparameter가 아닌 경우, 세일즈 포인트를 제외해도 학습된 모델의 성능에 큰 차이가 없었음
-  - h3의 경우 R2 SCORE과 RMSE로 보이는 성능이 다른 hyperparameter에 비해 떨어져도, MAPE에서는 더 높았음
-    - test1에서만 MAPE의 성능이 다른 모델에 비해서 좋았던 것이 아니기 때문에, h1,h5,h7의 과적합이 방지된 모델을 더욱 튜닝하면 성능을 올릴 수 있을 것이라 유추할 수 있음
-- num_boost_round가 큰 모델이 전반적으로 성능이 좋았으나, min_child_weight, colsample_bytree 등으로 과적합에 대해 방지된 모델들이 Expt.1, Expt.2의 test2에서 더 안정적인 결과가 나온 것을 확인
-  - h1,h5,h7의 경우는 Expt.2와 Expt.1에서의 성적에 큰 차이가 없거나, Expt.2에서 더 좋은 성능을 보였음
-  - 정가가 포함되지 않은 상황에서 할인율을 잘 맞추는(Expt.4에서 성능을 보인) hyperparameter가 Expt.1, Expt.2의 test2에서도 전반적으로 강건할 것이라는 예상이 아주 틀리지는 않았음
-- GridSearchCV 과정 중에 더 높은 validation 성적을 보였던 경우가 항상 최고의 성능을 보이지는 않았음
-  - 다만 상위권의 hyperparameter가 상위권의 성능을 유지하는 것을 확인했음
-  - 또한 test2의 성능에 맞춰서 튜닝하기 위해서는 test2에 맞게 만들어진 validation set을 설정해야 함을 확인
-- 정가를 학습 데이터에 포함하지 않았을 때, train set에 등장 한 적 없는 종류의 도서에 대해서는 중고 판매가 예측 성능이 많이 떨어지는 것을 발견
-  - 정가가 포함되어 있는 경우 best model에서 total_gain 기준 feature importance가 매우 큰 것을 확인 할 수 있음
-  - Expt.1, Expt.2에서 learning rate가 높은 hyperparameter는 과적합으로 성능이 좋지 않으나, Expt.3에서는 더 복잡한 모델이 필요하여 성능이 더 잘나온 것으로 유추할 수 있음
 
 ## 8. 결론 및 한계
 
@@ -258,4 +243,4 @@
 ## 10. 참고문헌
 
 - [VSPU17](https://arxiv.org/abs/1706.03762) : Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
-- (github link)
+- [K19](https://github.com/hyunwoongko/transformer/tree/master) : hyunwoongko, transformer, GitHub, 2019
