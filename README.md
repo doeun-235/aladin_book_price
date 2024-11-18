@@ -6,13 +6,13 @@
 
 ### 배경
 
-- [알라딘 중고도서 가격 예측 프로젝트](https://github.com/kdt-3-second-Project/aladin_usedbook)에서 정가 column을 학습 데이터에서 제외하면 성능이 급격히 낮아진 것에 착안
+- [알라딘 중고도서 가격 예측 프로젝트 [1]][(OLPJ24)]에서 정가 column을 학습 데이터에서 제외하면 성능이 급격히 낮아진 것에 착안
 - 데이터 셋에 포함된 도서 정보 중, 도서명이 중요한 독립변수 중 하나이므로 자연어 문장의 의미를 파악하는 것이 중요하리라 예상
-- Attention을 이용한 Transformer는 자연어 처리에서 맥락적 의미를 수치화하는데 특출난 성능과 연산속도를 보여 인공지능사에 한 획을 그은 모델
+- Attention을 이용한 Transformer[[2]][(VSPU17)]는 자연어 처리에서 맥락적 의미를 수치화하는데 특출난 성능과 연산속도를 보여 인공지능사에 한 획을 그은 모델
 
 ### 목표
 
-- [알라딘 중고도서 가격 예측 프로젝트](https://github.com/kdt-3-second-Project/aladin_usedbook)에서 구축한 데이터 셋을 이용해, 도서 정보로 정가를 예측하는 회귀 모델 개발
+- 알라딘 중고도서 가격 예측 프로젝트[[1]][(OLPJ24)]에서 구축한 데이터 셋을 이용해, 도서 정보로 정가를 예측하는 회귀 모델 개발
 - Attention 기반 모델을 PyTorch를 이용해 설계 및 학습 진행
   - Attention 및 Transformer에 대해 학습하는 차원에서 Pytorch를 이용해 직접 구현
 - 기타 모델과 여러 성능 지표 및 실험을 통하여 Attention 기반 모델의 성능을 적절히 평가
@@ -73,7 +73,7 @@
   - train : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 101,173건
   - valid : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 25,294건
   - test : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 31,617건
-- Transformer의 ncoder를 응용하여 도서 정가 예측에 효과적인 모델 설계
+- Transformer의 encoder를 응용하여 도서 정가 예측에 효과적인 모델 설계
   - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 단순한 Multilayer Perceptron 모델과 성능 비교
 - RMSE, MAPE, R2 Score 등의 회귀 평가 지표를 사용하여 성능을 각 모델 별로 분석
 - 모델의 hyperparameter에 따른 성능의 차이 확인
@@ -131,36 +131,52 @@
 
 ## 5. 모델 설계
 
-- **INPUT** : (*batch_size*, 64) | **OUTPUT** : (*batch_size*, 1)
-- self attention layer 기반의 encoder(이하 attention based encoder)에 Multilayer perceptron (이하 MLP) layer들을 연장한 모델
+- **INPUT** : (*batch_size*, 64) $\rightarrow$ **OUTPUT** : (*batch_size*, 1)
+- self attention layer 기반의 encoder(이하 attention based encoder)에 multilayer perceptron (이하 MLP) layer들을 연장한 모델
   - self attention layer는 행렬곱 및 내적의 연장이기 때문에, 병렬계산이 가능하고 parameter 수가 같다면 MLP에 비해 연산이 빠름
-  - attention layer를 적극적으로 이용한 Transformer는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
+  - attention layer를 적극적으로 이용한 Transformer[[2]][(VSPU17)]는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
   - 이번 과제도 단어가 나열됐을 때 형성되는 맥락과 관련되어 있다 이해할 수 있기 때문에, attention based encoder 모델이 효과적일 수 있을 것이라 예상
-- attention based encoder 내부에 Transformer에 사용된 encoder submodule을 N=6층 쌓고, 3층의 MLP를 연장함
-- **attention based encoder** : (*batch_size*, 60) -> (*batch_size*, *d_model* , 60)
+- attention based encoder 내부에 Transformer에서 사용된 encoder submodule을 N=6층 쌓고, 3층의 MLP를 연장
+- **[attention based encoder](./module_aladin/attention_based_model.py)** : (*batch_size*, 60) $\rightarrow$ (*batch_size*, *d_model* , 60)
   - Transformer의 encoder submodule을 응용해서 단어가 나열된 부분의 문맥 정보를 수치화 하기 위한 의도
+  - PyTorch로 Transformer를 layer 레벨부터 구현한 코드[[3]][(K19)]를 참고하여 구현
   - corpus에 대한 정수 encoding이 사용된 [0,60] 번째에 해당하는 tensor를 입력받음
     - 모델 입력 중 Category, BName, BName_sub 정보를 사용
+  - dropout은 encoder submodule의 multi-head self attention layer, feed-forward network layer에 각각 적용됨
   - 세부 내용
 
-    |입력 형태|설명|
-    |:-:|-|
-    | (*batch_size*, 60)| vocab_size의 Embedding model이 *d_model* 차원의 tenseor에 대응시킴 |
-    | (*batch_size*, *d_model* , 60)| multihead attention layer, feed forward layer로 이뤄진 N개의 encoder submodule를 통과 |
+    |명칭|입력 형태|설명|
+    |:-:|:-:|-|
+    | embedding model | (*batch_size*, 60) | *vocab_size* 크기의 corpus를 기반으로 한 모델로, *d_model* 차원의 tenseor에 대응 |
+    |encoder submodule | (*batch_size*, *d_model* , 60)|multi-head self attention layer, feed forward layer로 이뤄졌고, *N* 번 반복됨 |
 
-    *<b>도표.5</b> encoder의 부분 별 설명*
+    *<b>도표.5</b> encoder module의 구성*
 
-    |d_model |vocab_size|head |d_k |d_v |d_ff |dropout|
-    |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-    |60  | 32050   |6    |10  |10  |128  |0.1    |
+    ![attention](./imgs/attention_layer.jpg)
+    *<b>도표.6.</b> <b>a.</b> attention based encoder module, <b>b.</b> scaled dot-product attention, <b>c.</b> multi-head attention [[2]][(VSPU17)]*
 
-    *<b>도표.6</b> encoder submodule 관련 hyperparameter 값*
+    |명칭|입력 형태|설명|
+    |:-:|:-:|-|
+    |positional encoding | (*batch_size*, *d_model*, 60)| 삼각함수 이용|
+    |multi-head <br> self attention layer| (*batch_size*, *d_model*, 60)| *d_k*, *d_k*, *d_v* 에 맞는 구조의 scaled dot-product attention이 *head* 개|
+    |add & norm| (*batch_size*, *d_model* , 60), <br> (*batch_size*, *d_model* , 60)| add residual & normalize |
+    |feed forward layer1 | (*batch_size*, *d_model* , 60)| ReLU가 적용 된 linear layer|
+    |feed forward layer2 | (*batch_size*, *d_model* , *d_ff*)| linear layer|
+    |add & norm| (*batch_size*, *d_model* , 60), <br> (*batch_size*, *d_model* , 60)| add residual & normalize|
 
-- **MLP submodule** : (*batch_size*, *d_model* , 60), (*batch_size*, 4) -> (*batch_size*, 1)
-  - encoder submodule의 출력과 corpus와 무관한 feature들을 종합하여 model output 예측
+    *<b>도표.7</b> encoder submodule의 구성*
+
+    |*d_model* |*vocab_size*|*N*|*head* |*d_k* |*d_v* |*d_ff* |*dropout*|
+    |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+    |60  | 32050   |6|6    |10  |10  |128  |0.1    |
+
+    *<b>도표.8</b> encoder submodule 관련 hyperparameter 값*
+
+- **MLP module** : (*batch_size*, *d_model* , 60), (*batch_size*, 4) $\rightarrow$ (*batch_size*, 1)
+  - encoder module의 출력과 corpus와 무관한 feature들을 종합하여 model output 예측
     - 해당 feature : Author, Author_mul, Publshr, Pdate
   - concat layer의 output 형태를 (*batch_size*, *d_mlp*)라 하면, *d_mlp* = *d_model* * 60 + 4
-  - 활성화 함수 : ReLU, dropout : 0.1 적용
+  - 활성화 함수, dropout : 각각 ReLU, 0.1 적용
   - 세부 내용
 
     |입력 형태|설명|
@@ -168,9 +184,9 @@
     | (*batch_size*, *d_model* , 60), (*batch_size*, 4) | attention based encoder의 output과 model input 중 정수 encoding이 되지 않은 정보를 concat |
     | (*d_mlp*, *d_mlp* // 2) | 활성화 함수 및 dropout이 적용된 linear layer|
     | (*d_mlp* // 2, *d_mlp* // 2) | 활성화 함수 및 dropout이 적용된 linear layer|
-    | (*d_mlp* // 2, 1) | linear layer|
+    | (*d_mlp* // 2, 1) | model output으로 연결되는 linear layer|
 
-    *<b>도표.7</b> MLP submodule의 layer별 설명*
+    *<b>도표.9</b> MLP submodule의 layer별 설명*
   
 <!--모델 구조도-->
 
@@ -178,59 +194,117 @@
 
 ### 개요
 
-- 모델 성능은 RMSE, MAPE, R2 Score 등을 활용하여 평가
+- 모델 성능은 RMSE, MAPE, $R^2$ Score 등을 활용하여 평가
+- 두 가지 방법으로 평가 진행
+  - *test 1* : 전체 데이터에 대해서 평가
+  - *test 2* : 정가가 60,000원 이하인 데이터에 대해서 평가
+    - 정가 60,000원 이하인 데이터가 대부분
+    - Train, Valid, Test 각각 %,%,%
 - attention based encoder 모델 및 학습에서의 hyperparameter를 변경하며 학습 성능 평가
-  - **batch size** : 256, 512, 4,096, 65,536에 대해서 실험 진행
-    - *learning rate* : batch size에 맞게 초기 learning rate를 정한 뒤 학습 상황에 따라 감소시켜 적용
-  - **head** : 3, 6, 12에 대해서 실험 진행
+  - **batch size** : 512, 8192, 16384에 대해 실험 진행
+  - *learning rate* : batch size에 맞게 초기 learning rate를 정한 뒤 학습 상황에 따라 감소시켜 적용
+  - 초기 learning rate를 제외한 학습 hyperparameter는 동일하게 적용
+
+    |factor|adam_eps|patience|warmup|
+    |-:|-:|-:|-:|
+    |0.95|5e-7|10|3|
+
+    |epoch|clip|weight_decay|dropout|
+    |-:|-:|-:|-:|
+    |500|1.0|5e-20|0.1|
+
+    *<b>도표.10</b> model 학습 hyperparameter*
+
 - 모델 성능의 평가를 위해 XGBoost, Random Forest Regressor 모델, 간단한 MLP모델과 성능 비교
 
+<!--
 ### 평가 기준
 
 - metric : RMSE, MAPE, $R^2$ score
 - metric 별 성능에 가중치를 적용한 뒤 조화 평균으로 순위를 메김
   - 산술, 기하 평균에 비해 조화 평균은 값들 간의 차이가 크지 않은 것을 상대적으로 높게 평가
   - 세 metric에 대하여 고루 잘 예측하는 모델을 목표로 하기 때문에 조화 평균을 사용
+-->
+### 모델 평가
 
-#### 모델 평가
-
-- 가독성을 고려하여 15개의 hyperparameter 중 각 실험에서 3위 안에 든 hyperparameter의 모음에 default(h0)를 포함한 8종에 대한 결과만 추려서 정리
-- *Expt.1*
+- *Expt.1* : *batch_size* = 512
+  - *init_lr* :
+  - *best_epoch* :
   - 학습 결과
 
-  | **test1**|        h0 |        h1 |        h2 |        h3 |        h5 |        h7 |       h10 |       h12 |
-  |:---------|----------:|----------:|----------:|----------:|----------:|----------:|----------:|----------:|
-  | RMSE     | 791.45    | 624.77    | 610.14    | 605.39    | 612.01    | 611.04    | 629.77    | 631.19    |
-  | MAPE     |   0.08123 |   0.06398 |   0.06264 |   0.06101 |   0.06162 |   0.06168 |   0.06322 |   0.06335 |
-  | R2_SCORE |   0.95539 |   0.9722  |   0.97349 |   0.9739  |   0.97332 |   0.97341 |   0.97175 |   0.97163 |
+    |RMSE|MAPE|R2 SCORE|
+    |-:|-:|-:|
+    ||||
+
+    *<b>도표.</b> batch_size = 512 일 때 모델 성능*
+
+    *<b>도표.</b> batch_size = 512 일 때 참 값과 예측 값 사이 산포도*
+
+    *<b>도표.</b> batch_size = 512, 정가 60,000원 이하 일때 참 값에 따른 예측값의 histogram*
+
+    *<b>도표.</b> batch_size = 512, 정가 60,000원 이하 일때 참 값에 따른 절대 오차의 histogram*
+
+    *<b>도표.</b> batch_size = 512, 정가 60,000원 이하 일때 참 값에 따른 상대 오차의 histogram*
+
+### 대조군 모델
+
+- 동일한 방식으로 전처리한 데이터를 이용하여 회귀 예측 모델 설계
+- **Random Forest Regressor** : 기본 hyperparameter로 진행
+  - 성능
+- **XGBoost Regressor**
+  - 독립변수가 동일한 알라딘 중고도서 가격 예측[[1]][(OLPJ24)]의 Expt.4에서 가장 성능이 좋았던 hyperparameter로 진행
+
+    |*num_boost_round*|  *learning_rate*|  *max_depth*|
+    |-:|-:|-:|
+    |2500|  0.3|  6|  
+
+    |*min_child_weight*|  *colsample_bytree*|  *subsample*|
+    |-:|-:|-:|
+    |4|  1|  1|
   
-  *<b>도표.14</b> Expt.1에서 test set으로 평가한 결과*
-
-  | **test2**|         h0 |         h1 |         h2 |         h3 |         h5 |         h7 |        h10 |        h12 |
-  |:---------|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|
-  | RMSE     | 1461.59    | 1461.72    | 1463.05    | 1477.96    | 1469.03    | 1499.15    | 1606.71    | 1607.75    |
-  | MAPE     |    0.13294 |    0.14177 |    0.15186 |    0.14469 |    0.14524 |    0.14276 |    0.1594  |    0.1551  |
-  | R2_SCORE |    0.91175 |    0.91174 |    0.91158 |    0.90977 |    0.91085 |    0.90716 |    0.89336 |    0.89322 |
+    *<b>도표.</b> XGBoost 관련 hyperparameter*
+  - 성능
   
-  *<b>도표.15</b> Expt.1에서 test set 중 train set에 포함된 적 없는 종류의 도서들에 대해 평가한 결과*
+- **MLP Regressor**
+  - 5개 층으로 구성하여 학습 진행, 활성화 함수는 ReLU
+  - 세부 사항
 
-  | **평균** |         h0 |        h1 |        h2 |       <b> h3</b> |        h5 |        h7 |       h10 |       h12 |
-  |:---------|-----------:|----------:|----------:|-----------------:|----------:|----------:|----------:|----------:|
-  | RMSE     | 1026.86    | 875.38    | 861.15    | <b>858.95   </b> | 864.05    | 868.21    | 904.87    | 906.49    |
-  | MAPE     |    0.10084 |   0.08817 |   0.0887  | <b>  0.08583</b> |   0.08653 |   0.08614 |   0.09053 |   0.08996 |
-  | R2_SCORE |    0.93306 |   0.941   |   0.94152 | <b>  0.94074</b> |   0.94105 |   0.93912 |   0.93091 |   0.93078 |
-  | 종합순위 |   11       |   4       |   1       | <b>  0      </b> |   2       |   3       |   9       |   8       |
+    |입력|출력|비고|
+    |:-:|:-:|-|
+    |64|256||
+    |256|32|batch norm과 dropout을 적용|
+    |32|32|batch norm과 dropout을 적용|
+    |32|8|batch norm과 dropout을 적용|
+    |8|1|output 출력|
 
-  *<b>도표.16</b> Expt.1에서 두 평가에 대해 조화평균을 취하고 순위를 매긴 결과*
+    *<b>도표.</b> MLP model의 각 layer별 입력 및 출력 tensor의 차원*
+  
+    |init_lr|factor|adam_eps|patience|warmup|
+    |-:|-:|-:|-:|-:|
+    |0.015|0.999995|5e-7|15|3|
+
+    |epoch|clip|weight_decay|dropout|
+    |-:|-:|-:|-:|
+    |700|1.0|5e-9|0.1|
+
+    *<b>도표.</b> MLP model 학습 hyperparameter*
+  - 학습 결과
+  
+  ||Train|Valid|Test|
+  |-|-:|-:|-:|
+  |RMSE|8638.70|8893.68|10034.56|
+  |MAPE|0.37203|0.38830|0.39802|
+  |R2 SCORE|0.38263|0.26371|0.23795|
+  
+  *<b>도표.</b> MLP model 성능* 
 
 ## 7. 결과 분석
 
-  ||Expt.1|Expt.2|Expt.3|
-  |:-|-:|-:|-:|
-  |hyperparameter|h3|h5|h10|
-  |RMSE|858.95|857.75|1525.96|
-  |MAPE|0.08583|0.08718|0.15823|
-  |R2 SCORE|0.94074|0.94294|0.66289|
+  ||Encoder based model|RFR|XGB|MLP|
+  |:-|-:|-:|-:|-:|
+  |RMSE|858.95|857.75|1525.96||
+  |MAPE|0.08583|0.08718|0.15823||
+  |R2 SCORE|0.94074|0.94294|0.66289||
 
   *<b>도표.29</b> 각 실험 별 best model과 성능*
 
@@ -238,10 +312,15 @@
 
 ### 결론
 
-- 간단한 Machine-learning 모델과 multilayer perceptron으로는 성능이 
+- 간단한 Machine-learning 모델과 multilayer perceptron으로는 충분한 성능이 나오지 않음
 
 ### 한계 평가
 
+- 정가가 outlier에 해당하는 데이터를 학습에서 제외했을 때 성능이 개선되는지 확인 필요
+- 도서 정가가 보통 1000원 단위로 결정되고, 100원 단위 미만으로는 대부분 값이 비어있는 특징을 encoder based model 학습에는 반영하지 못했음
+  - RFR, XGB의 경우 성능이 향상되는 것을 확인(?)
+  - 해당 특징을 반영했을 때 학습 효율성이 더 높아질 수 있음
+  - parameter 양자화를 하면, 학습 및 추론 속도도 향상될 수 있음
 - 정가 예측에 큰 도움을 줄 수 있는 추가적인 정보(제본 형태, 쪽수 등)를 데이터셋에 추가하지 않고 학습 진행
 - Attention을 이용한 다양한 모델, 특히 attention layer로만 구성된 모델을 이용한 학습을 시도해보지 못함
 - 행렬 계산을 이용한 Transformer 모델이 연산속도 측면에서 갖는 장점을 충분히 활용했는지 평가 필요
@@ -256,8 +335,8 @@
 
 ## 9. 추후 과제
 
-- 학습 및 예측 속도를 향상시키기 위해 할 수 있는 조치를 조사
-- d_model, d_ff, head 개수, N 등의 모델 구조 관련 hyperparameter를 변경했을 때 성능이 어떻게 달라지는지 탐구
+- 출간 연도 등으로 stratify하여 학습할 때 성능을 높히는 것이 가능한지 확인
+- *d_model*, *d_ff*, *head*, *N* 등의 모델 구조 관련 hyperparameter를 변경했을 때 성능이 어떻게 달라지는지 확인
 - Attention layer만을 이용한 모델 개발 및 성능 비교
   - 단어 corpus를 다른 열의 내용에 대하여도 확장하거나, 다른 embedding model로 vector화 된 정보들이 섞여있을 경우 학습에 주의 할 점 조사
 - 데이터를 보강하여 학습에 수월한 질 좋은 데이터셋 구성
@@ -269,5 +348,10 @@
 
 ## 10. 참고문헌
 
-- [VSPU17](https://arxiv.org/abs/1706.03762) : Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
-- [K19](https://github.com/hyunwoongko/transformer/tree/master) : hyunwoongko, transformer, GitHub, 2019
+1. [OLPJ24][(OLPJ24)] : Doeun Oh, Junseong Lee, Yerim Park, and Hongseop Jeong, 알라딘 중고 도서 데이터셋 구축 및 그에 기반한 중고 서적 가격 예측 모델, GitHub, 2024
+2. [VSPU17][(VSPU17)]: Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
+3. [K19][(K19)]: hyunwoongko, transformer, GitHub, 2019
+
+[(OLPJ24)]:https://github.com/kdt-3-second-Project/aladin_usedbook "OLPJ24"
+[(VSPU17)]:https://arxiv.org/abs/1706.03762 "VSPU17"
+[(K19)]:https://github.com/hyunwoongko/transformer/tree/master "K19"
