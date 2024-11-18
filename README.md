@@ -73,9 +73,10 @@
   - train : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 101,173건
   - valid : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 25,294건
   - test : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 31,617건
-- Attention Layer를 주로 이용하여 도서 정가 예측에 효과적인 모델 설계
-  - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 Multilayer Perceptron 모델과 성능 비교
+- Transformer의 ncoder를 응용하여 도서 정가 예측에 효과적인 모델 설계
+  - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 단순한 Multilayer Perceptron 모델과 성능 비교
 - RMSE, MAPE, R2 Score 등의 회귀 평가 지표를 사용하여 성능을 각 모델 별로 분석
+- 모델의 hyperparameter에 따른 성능의 차이 확인
 
 ## 4. [전처리](./code/)
 
@@ -116,9 +117,8 @@
 - validation 및 test set의 데이터가 전처리에 영향을 주지 않도록 주의하여 진행
   - train set을 전처리 하면서 결정된 함수 및 관련 내용들을 validation 및 test set에 일괄적으로 적용
 - Mecab을 사용해 Category, BName,BName_sub 컬럼을 토큰화
-  - [Mecab](https://pypi.org/project/python-mecab-ko/)은 원문 내 띄어쓰기에 의존하기보다 사전을 참조해 어휘를 구분하여 안정적인 결과값을 보여줌
 - 도서 명(BName, BName_sub)과 카테고리는 하나의 corpus로 통합하여 정수 인코딩
-  - 글의 내용이 되는 문장이 아닌 제목이므로, train set의 해당 열에 포함 된 최대한 모든 토큰을 데이터 셋에 포함
+  - 줄글의 일부가 아닌 책 제목이므로, train set의 해당 열에 포함 된 최대한 모든 토큰을 데이터 셋에 포함
 - 출판사, 판매 지점, 저자 명에 대해서는 빈도 수 혹은 SalesPoint를 고려한 인기를 반영하여 정수 인코딩
 - 날짜 관련 데이터 정수형으로 인코딩
 - 단어 corpus 관련 열이 아닌 열에 대해 MinMaxScaling 진행
@@ -127,19 +127,52 @@
 
   ![image](https://github.com/user-attachments/assets/f4a98000-345b-4695-a2e8-0fbfff784d68)
 
-  *<b>도표.4</b> 전처리,스케일링후 최종 데이터 예시*
+  *<b>도표.4</b> 전처리, 스케일링 후 최종 데이터 예시*
 
 ## 5. 모델 설계
 
-- **INPUT** : (*batch_size*, 64) / **OUTPUT** : (*batch_size*, 1)
-- self attention layer 기반의 encoder(이하 attention based encoder)에 Multilayer perceptron(이하 MLP)을 연장한 모델
+- **INPUT** : (*batch_size*, 64) | **OUTPUT** : (*batch_size*, 1)
+- self attention layer 기반의 encoder(이하 attention based encoder)에 Multilayer perceptron (이하 MLP) layer들을 연장한 모델
   - self attention layer는 행렬곱 및 내적의 연장이기 때문에, 병렬계산이 가능하고 parameter 수가 같다면 MLP에 비해 연산이 빠름
   - attention layer를 적극적으로 이용한 Transformer는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
   - 이번 과제도 단어가 나열됐을 때 형성되는 맥락과 관련되어 있다 이해할 수 있기 때문에, attention based encoder 모델이 효과적일 수 있을 것이라 예상
-- attention based encoder 내부에 Transformer에 사용된 encoder submodule을 N층 쌓고, 3층의 MLP를 연장함
-  - 단어에 대한 정수 encoding이 사용된 [0,60] 번째에 해당하는 tensor를 attention based encoder가 입력받음
-  - Embedding model이 *d_model* = 60 차원의 tenseor에 대응시킴
-  - 실험에 따라 다른 *head* 값의 multi head attention layer와 
+- attention based encoder 내부에 Transformer에 사용된 encoder submodule을 N=6층 쌓고, 3층의 MLP를 연장함
+- **attention based encoder** : (*batch_size*, 60) -> (*batch_size*, *d_model* , 60)
+  - Transformer의 encoder submodule을 응용해서 단어가 나열된 부분의 문맥 정보를 수치화 하기 위한 의도
+  - corpus에 대한 정수 encoding이 사용된 [0,60] 번째에 해당하는 tensor를 입력받음
+    - 모델 입력 중 Category, BName, BName_sub 정보를 사용
+  - 세부 내용
+
+    |입력 형태|설명|
+    |:-:|-|
+    | (*batch_size*, 60)| vocab_size의 Embedding model이 *d_model* 차원의 tenseor에 대응시킴 |
+    | (*batch_size*, *d_model* , 60)| multihead attention layer, feed forward layer로 이뤄진 N개의 encoder submodule를 통과 |
+
+    *<b>도표.5</b> encoder의 부분 별 설명*
+
+    |d_model |vocab_size|head |d_k |d_v |d_ff |dropout|
+    |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+    |60  | 32050   |6    |10  |10  |128  |0.1    |
+
+    *<b>도표.6</b> encoder submodule 관련 hyperparameter 값*
+
+- **MLP submodule** : (*batch_size*, *d_model* , 60), (*batch_size*, 4) -> (*batch_size*, 1)
+  - encoder submodule의 출력과 corpus와 무관한 feature들을 종합하여 model output 예측
+    - 해당 feature : Author, Author_mul, Publshr, Pdate
+  - concat layer의 output 형태를 (*batch_size*, *d_mlp*)라 하면, *d_mlp* = *d_model* * 60 + 4
+  - 활성화 함수 : ReLU, dropout : 0.1 적용
+  - 세부 내용
+
+    |입력 형태|설명|
+    |:-:|-|
+    | (*batch_size*, *d_model* , 60), (*batch_size*, 4) | attention based encoder의 output과 model input 중 정수 encoding이 되지 않은 정보를 concat |
+    | (*d_mlp*, *d_mlp* // 2) | 활성화 함수 및 dropout이 적용된 linear layer|
+    | (*d_mlp* // 2, *d_mlp* // 2) | 활성화 함수 및 dropout이 적용된 linear layer|
+    | (*d_mlp* // 2, 1) | linear layer|
+
+    *<b>도표.7</b> MLP submodule의 layer별 설명*
+  
+<!--모델 구조도-->
 
 ## 6. 학습 및 평가 결과
 
@@ -147,8 +180,6 @@
 
 - 모델 성능은 RMSE, MAPE, R2 Score 등을 활용하여 평가
 - attention based encoder 모델 및 학습에서의 hyperparameter를 변경하며 학습 성능 평가
-  - **N** : encoder 내부에 쌓여있는 submodule의 개수
-    - 1,3,6,9에 대해서 실험 진행
   - **batch size** : 256, 512, 4,096, 65,536에 대해서 실험 진행
     - *learning rate* : batch size에 맞게 초기 learning rate를 정한 뒤 학습 상황에 따라 감소시켜 적용
   - **head** : 3, 6, 12에 대해서 실험 진행
@@ -208,10 +239,6 @@
 ### 결론
 
 - 간단한 Machine-learning 모델과 multilayer perceptron으로는 성능이 
-- 간단한 모델과 default hyperparmeter로도 높은 성능이 나오는 것으로 보아, 알라딘 중고매장에서 중고 도서 판매 가격을 산정하는 가이드라인이 있을 것이라 추측 가능
-- 도서 명, 중고 등급, 정가, 출판일, 저자 등 실물 중고 도서에서 간단히 확인 가능한 특징만으로도 높은 성능이 충분히 가능
-- 세일즈 포인트가 중고가 예측에 큰 도움을 줄 수 있으나, 더 높은 성능의 모델을 학습시키기 위해서는 모델의 복잡도를 높히되 과적합을 방지하는 쪽이 더 유리한 것을 확인 했음
-- train set에서 중고 시세를 학습한 적 없는 종류의 도서에 대한 중고가에 대해서도 좋은 성능으로 예측한 것, best model들의 feature importance 등을 고려하면, NLP한 결과가 모델에 충분히 반영되었음을 알 수 있음
 
 ### 한계 평가
 
@@ -233,12 +260,12 @@
 - d_model, d_ff, head 개수, N 등의 모델 구조 관련 hyperparameter를 변경했을 때 성능이 어떻게 달라지는지 탐구
 - Attention layer만을 이용한 모델 개발 및 성능 비교
   - 단어 corpus를 다른 열의 내용에 대하여도 확장하거나, 다른 embedding model로 vector화 된 정보들이 섞여있을 경우 학습에 주의 할 점 조사
+- 데이터를 보강하여 학습에 수월한 질 좋은 데이터셋 구성
+  - 도서 정보 페이지에 정보 중, 도서 정가에 직접적인 영향을 주는 다른 정보(제본형태, 쪽수 등)를 추가적으로 크롤링
+  - 베스트 셀러에 포함된 적 없는 도서도 대상으로 하기 위한 크롤링 방법 개발 필요
 - 위의 모델 외에도 다양한 모델 개발 가능
   - 카테고리와 도서 명, 출판사, 정가 등의 정보로 출간 연도 예측
   - 도서 정보 및 중고 시장에서의 가격을 바탕으로 알라딘의 SalesPoint 산정법 추정
-- 데이터를 보강하여 학습에 수월한 질 좋은 데이터셋 구성
-  - 도서 정보 페이지에 포함되어 있는 가격에 영향을 주는 다른 정보(제본형태, 쪽수 등)를 추가적으로 크롤링
-  - 베스트 셀러에 포함된 적 없는 도서도 대상으로 하기 위한 크롤링 방법 개발 필요
 
 ## 10. 참고문헌
 
