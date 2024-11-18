@@ -1,43 +1,36 @@
-# 알라딘 중고 도서 데이터셋 구축 및 그에 기반한 중고 서적 가격 예측 모델
+# 알라딘 베스트셀러 데이터셋을 이용한 attention encoder 기반 서적 가격 예측 모델
 
-프로젝트 구성원: 오도은, 박예림, 이준성, 정홍섭 / [발표 슬라이드](https://docs.google.com/presentation/d/15EIOMGpadZQf3cT2k0pfClS9DVICLmmf5ZTH1k4XnKc/edit?usp=sharing)
-
-**사용된 스킬 셋**: NumPy, Pandas, Matplotlib, Beautifulsoup, re, Scikit-learn, xgboost, [Mecab](https://pypi.org/project/python-mecab-ko/)
+**사용된 스킬 셋**: NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, PyTorch, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
 ## 1. 프로젝트 개요
 
 ### 배경
 
-- 중고 도서의 상태, 저자, 장르 등 다양한 요소를 기반으로 중고 도서의 판매 가격이 형성됨
-- 중고 도서 가격은 상품의 종류 및 상태 별로 가격의 편차가 있음
-- 가격에 중요한 요소들의 내용은 쉽게 확인 가능하고, 상품 페이지에 정리가 잘 되어있는 편
-  - 크롤링을 통해 데이터셋을 구축하기에 접근성이 좋음
+- [알라딘 중고도서 가격 예측 프로젝트](https://github.com/kdt-3-second-Project/aladin_usedbook)에서 정가 column을 학습 데이터에서 제외하면 성능이 급격히 낮아진 것에 착안
+- 데이터 셋에 포함된 도서 정보 중, 도서명이 중요한 독립변수 중 하나이므로 자연어 문장의 의미를 파악하는 것이 중요하리라 예상
+- Attention을 이용한 Transformer는 자연어 처리에서 맥락적 의미를 수치화하는데 특출난 성능과 연산속도를 보여 인공지능사에 한 획을 그은 모델
 
 ### 목표
 
-- 크롤링을 통해 알라딘 중고도서 데이터 셋 구축
-- 알라딘 중고 매장에서 판매하는 중고 도서 가격을 예측하는 회귀 모델 개발
-  - 알라딘 홈페이지에서 판매하는 중고도서 중 중고 매장에서 판매하는 상품을 우선적 대상으로 함
-  - Random Forest Regressor, XGBoost 등의 다양한 모델을 이용
-- 각 모델의 성능을 여러 성능 지표 및 실험을 통하여 적절히 평가
+- [알라딘 중고도서 가격 예측 프로젝트](https://github.com/kdt-3-second-Project/aladin_usedbook)에서 구축한 데이터 셋을 이용해, 도서 정보로 정가를 예측하는 회귀 모델 개발
+- Attention 기반 모델을 PyTorch를 이용해 설계 및 학습 진행
+  - Attention 및 Transformer에 대해 학습하는 차원에서 Pytorch를 이용해 직접 구현
+- 기타 모델과 여러 성능 지표 및 실험을 통하여 Attention 기반 모델의 성능을 적절히 평가
+  - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 Multilayer Perceptron 모델과 성능 비교
 
 ## 2. 데이터 셋
 
 ### 1) 개요
 
-- 알라딘의 중고 도서 상품과 새 책 사이에 url 구조 등으로는 알라딘의 중고 도서와 새 책 사이에 구별할 수 없음
-- 알라딘에서 도서별로 중고 상품을 정리해 놓은 페이지를 이용하여 데이터 셋을 체계적으로 구축
-
-### 2) 구성
-
-#### [알라딘 주간 베스트셀러 데이터](https://www.aladin.co.kr/shop/common/wbest.aspx?BranchType=1)
-
-- 알라딘의 주간 베스트셀러 페이지에서 제공한 1~1000위에 대한 xls 파일 데이터를 이용하여 구성
+- 알라딘의 [주간 베스트셀러 페이지](https://www.aladin.co.kr/shop/common/wbest.aspx?BranchType=1)에서 제공한 1~1000위에 대한 xls 파일 데이터를 이용하여 구성
 - 2000년 1월 1주차 ~ 2024년 7월 2주차까지의 데이터를 포괄하며, 24-07-10 ~ 24-07-12에 수집 진행
+- 총 158,084 종의 도서에 대한 정보로 구성되어 있음
 
 ![image](https://github.com/user-attachments/assets/e330ca44-893c-4fad-8d91-4a2f520c13af)
 
 *<b>도표.1</b> 알라딘 주간 베스트셀러 페이지 예시*
+
+### 2) 구성
 
 - 총 1,415,586개의 row와 랭킹, 구분, 도서 명, ItemId, ISBN13, 부가기호, 저자, 출판사, 출판일, 정가, 판매가, 마일리지, 세일즈 포인트, 카테고리, 날짜 12개의 column
   - **구분** : 국내도서, 외국도서 등으로 구분되어 있음
@@ -59,73 +52,31 @@
 
 *<b>도표.2</b> 알라딘 주간 베스트 셀러*
 
-#### [알라딘 중고 도서 데이터](https://www.aladin.co.kr/shop/UsedShop/wuseditemall.aspx?ItemId=254468327&TabType=3&Fix=1)
-
-![image](https://github.com/user-attachments/assets/e8840608-96f8-47e6-954b-5d6e08f47df9)
-
-*<b>도표.3</b> 도서 별 중고 매물 목록 페이지 예시*
-
-<!--위의 탭을 포함하는 이미지로 업데이트 필요-->
-
-- 알라딘 중고 도서는 판매자 별로 셋으로 분류 됨
-  1. 알라딘 직접 배송 : 중고매장에서 판매하고 있지 않은 중고 도서
-  2. 알라딘 온라인 중고매장 : 오프라인의 알라딘 중고 매장에서 판매되고 있는 중고 도서
-  3. 판매자 중고 : 판매자가 알라딘이 아닌 중고 도서
-- [알라딘 온라인 중고매장(광활한 우주점)](https://www.aladin.co.kr/usedstore/wonline.aspx?start=we)에 등록 된 중고 도서 매물로 한정
-  - 도서멸 중고 매물 목록 페이지 url 구조 상, 새 책의 ItemId를 이용하여 접근할 수 있음
-  - 판매자 분류를 기준으로 탭이 나눠져 있으며, 알라딘 중고 매장도 그 중 하나의 탭
-- 위의 베스트셀러 데이터에 포함된 도서(ItemId)를 기준으로 크롤링한 중고도서 매물 자료
-
-![image](https://github.com/user-attachments/assets/6bc6657e-cc45-4830-baaa-fca240733d6e)
-
-*<b>도표.4</b> 알라딘 중고 도서 데이터*
-
-- 총 784,213개의 row, 7개의 column으로 구성.
-  - 각 row 당 중고 도서 매물 하나에 해당
-    - 103,055 종의 도서에 대한 중고도서 매물 784,213건
-  - ItemId (새 책 기준), 중고 번호, 중고 등급, 판매지점, 배달료, 중고가, 판매 url
-  - **ItemId** : ItemId는 중고 도서를 포함하여 모든 상품에 각각 부여되기 때문에, 책 종류를 구별하려면 새 책 기준 ItemId를 사용해야 함
-  - **중고 번호** : 해당도서의 중고도서 목록 페이지에 있었던 순서
-  - **중고가, 품질**
-    - 중고가는 품질(중고 등급)의 큰 영향을 받으며, '균일가' 및 '하', '중', '상', '최상'으로 구분되어 있음
-    - 품질이 높을수록 중고가가 높은 경향이 있음
-    - 같은 품질이라도 가격이 다르거나, 낮은 품질의 매물보다 더 가격이 싼 경우가 종종 있음
-  - **판매 url** : 해당 중고 매물에 대한 판매 페이지. 해당 중고 매물의 ItemId가 url에 포함되어 있음
-
-- 위 2개의 데이터를 종합하여 데이터셋을 만들어 프로젝트를 진행
-- 종합된 데이터 셋에서는 ItemId, 도서 명, 중고 등급, 판매 지점, 저자, 출판사, 출판일, 정가, 판매가, 세일즈포인트, 카테고리, 중고가 총 12개를 column으로 사용
-
-![image](https://github.com/user-attachments/assets/caa98ef5-b5be-47d9-a9c4-9ff236ecdb48)
-
-*<b>도표.5</b> 데이터 셋들에 포함된 주요 column 및 그에 대한 개요*
-
 ## 3. 문제 설정
 
-**목표**: 품질, 판매 지점, 저자, 출판사, 출판일, 정가 등의 값을 이용하여 알라딘에서 공식으로 판매하는 중고 서적 가격을 예측 하고 분석하고자 함
+**목표**: 저자, 출판사, 출판일, 제목 등의 값을 이용하여 도서의 정가를 예측
 
 ### 1) 종속 변수/ 독립 변수
 
-- 종속 변수를 제외한 항목 중에서 총 11개의 독립변수 선정
+- 종속 변수를 제외한 항목 중에서 총 7개의 독립변수 선정
   - BName_sub (도서명에서 괄호 안의 내용), Author_mul (저자 등이 여러 명으로 표기되었는지 여부) 등 파생 항목 포함. 해당 내용은 전처리 파트에서 후술
 
   | 종속 변수 | 독립 변수 |
   |---------|---------|
-  | Price |quality, store, BName, BName_sub, Author, Author_mul, Publshr, Pdate, RglPrice, Category, SalesPoint |
+  | RglPrice |BName, BName_sub, Author, Author_mul, Publshr, Pdate, Category |
 
-  *<b>도표.6</b> 모델의 종속 변수 및 독립 변수*
+  *<b>도표.3</b> 모델의 종속 변수 및 독립 변수*
 
 ### 2) 실험 설계
 
 - sklearn을 이용하여 train 64%, validation 16%, test 20% 비율로 분리
-  - train : 95,061종의 도서에 대한 중고도서 501,896건
-  - valid : 62,995종의 도서에 대한 중고도서 125,474건
-  - test : 69,385종의 도서에 대한 중고도서 156,843건
-- XGBoost Regressor(이하 XGB)을 학습시킬 때 높은 성능을 내는 hyperparameter 탐색
-- 크게 세 가지 측면으로 실험 진행
-  - Grid search를 이용해 각 실험 별로 가장 높은 성능을 내는 hyper parameter 탐색
-  - 정가와 SalesPoint를 학습에서 제외시켜도 안정적인 성능이 나오는지 탐색
-  - train set에 포함되지 않았던 도서들에 대한 중고 매물로 test 대상을 한정지었을 때, 성능이 어떻게 달라지는지 탐색
+  - train : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 101,173건
+  - valid : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 25,294건
+  - test : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 31,617건
+- Transformer의 ncoder를 응용하여 도서 정가 예측에 효과적인 모델 설계
+  - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 단순한 Multilayer Perceptron 모델과 성능 비교
 - RMSE, MAPE, R2 Score 등의 회귀 평가 지표를 사용하여 성능을 각 모델 별로 분석
+- 모델의 hyperparameter에 따른 성능의 차이 확인
 
 ## 4. [전처리](./code/)
 
@@ -153,7 +104,7 @@
 - [저자 명](./research/240716_check_bookinfo2.ipynb)
   - 여러 명이 제작자로 기재된 경우, 맨 앞의 제작자만 남김
     - 여러 명이 기재되어 있었는지 여부를 Author_mul에 bool형태로 기록
-      - ex) "정홍섭 글 이준성 그림" -> "정홉섭 글", True
+      - ex) "김려원 글 김이후 그림" -> "김려원 글", True
   - 이름 뒤에 붙은 기타 문자열 처리
     - 역할에 대한 단어 : "글", "시", "역", "지음", "평역" 등 총 72가지
     - 다수의 사람이 참여했다는 의미의 단어
@@ -161,169 +112,85 @@
 - 출간일 : DateTime 타입으로 파싱
 - ItemId, 정가, 판매가 : 정수 형태로 변환
 
-#### [중고 도서 목록 전처리](./code/step3_preprocess_usedinfo.py)
-
-- 이상치 처리:
-  - 알라딘 페이지에서 '최상', '상', '중' 등급이 있는 것으로 안내하지만, '균일가', '하' 등급도 소수 존재
-  - '균일가', '하'는 [하]로 통일
-- 배달료 : 2500원으로 통일되어 있어 삭제
-
 #### [인코딩 및 스케일링](./research/240716_encoding_bookinfo.ipynb)
 
 - validation 및 test set의 데이터가 전처리에 영향을 주지 않도록 주의하여 진행
   - train set을 전처리 하면서 결정된 함수 및 관련 내용들을 validation 및 test set에 일괄적으로 적용
 - Mecab을 사용해 Category, BName,BName_sub 컬럼을 토큰화
-  - [Mecab](https://pypi.org/project/python-mecab-ko/)은 원문 내 띄어쓰기에 의존하기보다 사전을 참조해 어휘를 구분하여 안정적인 결과값을 보여줌
-- 도서 명(BName, BName_sub)과 카테고리는 하나의 코퍼스로 통합하여 정수 인코딩
-  - 글의 내용이 되는 문장이 아닌 제목이므로, train set의 해당 열에 포함 된 최대한 모든 토큰을 데이터 셋에 포함
-  - TF-IDF를 이용한 토큰 정리, 품사나 길이를 기준으로 정리하는 방법 등은 적용하지 않음
+- 도서 명(BName, BName_sub)과 카테고리는 하나의 corpus로 통합하여 정수 인코딩
+  - 줄글의 일부가 아닌 책 제목이므로, train set의 해당 열에 포함 된 최대한 모든 토큰을 데이터 셋에 포함
 - 출판사, 판매 지점, 저자 명에 대해서는 빈도 수 혹은 SalesPoint를 고려한 인기를 반영하여 정수 인코딩
 - 날짜 관련 데이터 정수형으로 인코딩
-- MinMaxScaling 진행
-  - 도서 명과 카테고리 관련 열은 일괄적으로 진행
-  - 이외의 열은 개별적으로 진행
+- 단어 corpus 관련 열이 아닌 열에 대해 MinMaxScaling 진행
+  - 도서 명(BName, BName_sub)과 카테고리는 이후 Embedding model에 학습시켜야 하므로 정수형 데이터를 가져야 함
+  - 그 외의 열에 대해서는 attention layer를 적용하지 않기로 결정하여 scaling 진행
 
   ![image](https://github.com/user-attachments/assets/f4a98000-345b-4695-a2e8-0fbfff784d68)
 
-  *<b>도표.7</b> 전처리,스케일링후 최종 데이터 예시*
+  *<b>도표.4</b> 전처리, 스케일링 후 최종 데이터 예시*
 
-## 5. 모델 학습 및 결과
+## 5. 모델 설계
+
+- **INPUT** : (*batch_size*, 64) | **OUTPUT** : (*batch_size*, 1)
+- self attention layer 기반의 encoder(이하 attention based encoder)에 Multilayer perceptron (이하 MLP) layer들을 연장한 모델
+  - self attention layer는 행렬곱 및 내적의 연장이기 때문에, 병렬계산이 가능하고 parameter 수가 같다면 MLP에 비해 연산이 빠름
+  - attention layer를 적극적으로 이용한 Transformer는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
+  - 이번 과제도 단어가 나열됐을 때 형성되는 맥락과 관련되어 있다 이해할 수 있기 때문에, attention based encoder 모델이 효과적일 수 있을 것이라 예상
+- attention based encoder 내부에 Transformer에 사용된 encoder submodule을 N=6층 쌓고, 3층의 MLP를 연장함
+- **attention based encoder** : (*batch_size*, 60) -> (*batch_size*, *d_model* , 60)
+  - Transformer의 encoder submodule을 응용해서 단어가 나열된 부분의 문맥 정보를 수치화 하기 위한 의도
+  - corpus에 대한 정수 encoding이 사용된 [0,60] 번째에 해당하는 tensor를 입력받음
+    - 모델 입력 중 Category, BName, BName_sub 정보를 사용
+  - 세부 내용
+
+    |입력 형태|설명|
+    |:-:|-|
+    | (*batch_size*, 60)| vocab_size의 Embedding model이 *d_model* 차원의 tenseor에 대응시킴 |
+    | (*batch_size*, *d_model* , 60)| multihead attention layer, feed forward layer로 이뤄진 N개의 encoder submodule를 통과 |
+
+    *<b>도표.5</b> encoder의 부분 별 설명*
+
+    |d_model |vocab_size|head |d_k |d_v |d_ff |dropout|
+    |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+    |60  | 32050   |6    |10  |10  |128  |0.1    |
+
+    *<b>도표.6</b> encoder submodule 관련 hyperparameter 값*
+
+- **MLP submodule** : (*batch_size*, *d_model* , 60), (*batch_size*, 4) -> (*batch_size*, 1)
+  - encoder submodule의 출력과 corpus와 무관한 feature들을 종합하여 model output 예측
+    - 해당 feature : Author, Author_mul, Publshr, Pdate
+  - concat layer의 output 형태를 (*batch_size*, *d_mlp*)라 하면, *d_mlp* = *d_model* * 60 + 4
+  - 활성화 함수 : ReLU, dropout : 0.1 적용
+  - 세부 내용
+
+    |입력 형태|설명|
+    |:-:|-|
+    | (*batch_size*, *d_model* , 60), (*batch_size*, 4) | attention based encoder의 output과 model input 중 정수 encoding이 되지 않은 정보를 concat |
+    | (*d_mlp*, *d_mlp* // 2) | 활성화 함수 및 dropout이 적용된 linear layer|
+    | (*d_mlp* // 2, *d_mlp* // 2) | 활성화 함수 및 dropout이 적용된 linear layer|
+    | (*d_mlp* // 2, 1) | linear layer|
+
+    *<b>도표.7</b> MLP submodule의 layer별 설명*
+  
+<!--모델 구조도-->
+
+## 6. 학습 및 평가 결과
 
 ### 개요
 
 - 모델 성능은 RMSE, MAPE, R2 Score 등을 활용하여 평가
-- Random Forest Regressor, XGBoost 모델 간의 성능을 비교
-  - XGBoost에 대해서는 GridSearchCV를 이용해 각 모델 별로 가장 높은 성능을 내는 hyper parameter 탐색
-- 각 모델 별로 4 종류의 상황에 대한 실험을 진행
-  - Expt. 1 : 모든 독립변수를 이용해 중고도서 가격 예측
-    - 독립변수 : Category, BName, BName_sub, quality, store, Author, Author_mul, Publshr, Pdate, RglPrice, SalesPoint
-  - Expt. 2 : 세일즈포인트를 제외한 독립변수를 이용해 중고도서 가격 예측
-  - Expt. 3 : 세일즈포인트와 정가를 제외한 독립변수를 이용해 중고도서 가격 예측
-  - Expt. 4 : 세일즈포인트와 정가를 제외한 독립변수를 이용해 중고도서 할인율 예측
-- 모델 평가는 두 가지 방법으로 진행
-  - test1 : 초기에 test dataset으로 설정된 데이터셋
-    - 69,385종의 도서에 대한 중고도서 156,843건
-  - test2 : train set에 포함된 적 없는 도서에 대한 중고 매물로 제한한 데이터셋
-    - test set에서 4,984종의 도서에 대한 중고도서 5,968건
-- 판매가와 SalesPoint를 학습에서 제외시켜도 안정적인 성능이 나오는지 탐색
+- attention based encoder 모델 및 학습에서의 hyperparameter를 변경하며 학습 성능 평가
+  - **batch size** : 256, 512, 4,096, 65,536에 대해서 실험 진행
+    - *learning rate* : batch size에 맞게 초기 learning rate를 정한 뒤 학습 상황에 따라 감소시켜 적용
+  - **head** : 3, 6, 12에 대해서 실험 진행
+- 모델 성능의 평가를 위해 XGBoost, Random Forest Regressor 모델, 간단한 MLP모델과 성능 비교
 
-### [GridSearchCV를 통한 hyperparmeter 선정](./research/240721_GridSearch_for_XGB.ipynb)
-
-#### 설계
-
-- 각 실험에 대해 GridSearchCV를 진행한 후, 가장 성적이 높았던 7개의 hyperparameter들을 후보로 삼음
-  - 총 486개의 hyperparameter 중에 총 14개의 후보를 고름
-- hyperparameter
-  - 고정 hyperparameter
-    - fold = 3
-    - early_stopping_rounds : num_boost_rounds에 따라 logistic하게 변하도록 설정
-
-      |num_boost_rounds|100|1500|2500|
-      |:-:|-:|-:|-:|
-      |early_stopping_rounds|30|48|51|
-
-      *<b>도표.8</b> early_stopping_rounds 설정값*
-
-  - 대상 hyperparamter 및 범위
-    - *num_boost_round* : [100, 1500, 2500]
-    - *learning_rate* : [0.5, 0.3, 0.1]
-    - *max_depth* : [4, 5, 6]
-    - *min_child_weight* : [1, 4, 7]
-    - *colsample_bytree* : [0.5, 1]
-    - *subsample* : [0.4, 0.7, 1]
-
-#### 우수 hyperparameter 및 성적
-
-- 아래에는 각 실험 별로 가장 성적이 높았던 4개의 hyperparameter에 대한 평가 결과를 정리
-- *Expt. 1* : 제외한 독립변수 없이 중고가 예측
-
-  ||**h2**|h3|h5|h6|
-  |-|-:|-:|-:|-:|
-  |num_boost_round|*2500*|2500|2500|2500|
-  |learning_rate|*0.3*|0.3|0.3|0.3|
-  |max_depth|*6*|6|6|6|
-  |min_child_weight|*1*|1|4|7|
-  |colsample_bytree|*0.5*|1|1|0.5|
-  |subsample|*1*|1|1|1|
-  |mean valid score|**_0.97207_**|0.97172|0.97163|0.97145|
-
-  *<b>도표.9</b> 제외한 독립변수 없는 상황에서 best parameter 및 R2 score*
-
-- *Expt. 2* : SalesPoint 제외하고 중고가 예측
-
-  ||**h2**|h3|h4|h7|
-  |-|-:|-:|-:|-:|
-  |num_boost_round|*2500*|2500|2500|2500|
-  |learning_rate|*0.3*|0.3|0.3|0.3|
-  |max_depth|*6*|6|6|6|
-  |min_child_weight|*1*|1|1|7|
-  |colsample_bytree|*0.5*|1|1|1|
-  |subsample|*1*|1|1|1|
-  |mean valid score|_**0.97139**_|0.97110|0.97058|0.97049|
-
-  *<b>도표.10</b> SalesPoint 제외한 상황에서 best parameter 및 R2 score*
-
-- *Expt. 3* : SalesPoint, 정가(RglrPrice) 제외하고 중고가 예측
-
-  ||h9|**h10**|h12|h13|
-  |-|-:|-:|-:|-:|
-  |num_boost_round|2500|*2500*|2500|2500|
-  |learning_rate|0.5|*0.5*|0.5|0.5|
-  |max_depth|6|*6*|6|6|
-  |min_child_weight|1|*1*|4|7|
-  |colsample_bytree|1|*0.5*|1|1|
-  |subsample|1|*1*|1|1|
-  |mean valid score|0.89100|**_0.89926_**|0.89525|0.89449|
-
-  *<b>도표.11</b> SalesPoint, RglPrice 제외한 상황에서 best parameter 및 R2 score*
-
-- *Expt. 4* : SalesPoint, 정가(RglPrice) 제외하고 할인율 예측
-
-  ||h9|h3|**h5**|h7|
-  |-|-:|-:|-:|-:|
-  |num_boost_round|2500|2500|*2500*|2500|
-  |learning_rate|0.5|0.3|*0.3*|0.3|
-  |max_depth|6|6|*6*|6|
-  |min_child_weight|1|1|*4*|7|
-  |colsample_bytree|1|1|*1*|1|
-  |subsample|1|1|*1*|1|
-  |mean valid score|0.79814|0.79872|**_0.79887_**|0.79823|
-
-  *<b>도표.12</b> SalesPoint, RglPrice 제외하고 할인율 예측할 때 best parameter 및 R2 score*
-
-### [XGB 모델 학습 및 평가](./research/240721_hyperparameters_XGB.ipynb)
-
-#### XGB 평가에 최종적으로 사용 된 hyperparmeter
-
-- GridSearchCV를 통해 고른 14개의 hyperparmeter와 default 값(h0)에 대해서 테스트 진행
-
-  ||h0|h1|h2|h3|h4|h5|h6|
-  |:-|-:|-:|-:|-:|-:|-:|-:|
-  |num_boost_round|100|1500|2500|2500|2500|2500|2500|
-  |learning_rate|0.3|0.3|0.3|0.3|0.3|0.3|0.3|
-  |max_depth|6|6|6|6|6|6|6|
-  |min_child_weight|1|4|1|1|4|4|7|
-  |colsample_bytree|1|1|0.5|1|0.5|1|0.5|
-  |subsample|1|1|1|1|1|1|1|
-
-  ||h7|h8|h9|h10|h11|h12|h13|h14|
-  |:-|-:|-:|-:|-:|-:|-:|-:|-:|
-  |num_boost_round|2500|2500|2500|2500|2500|2500|2500|2500|
-  |learning_rate|0.3|0.5|0.5|0.5|0.5|0.5|0.5|0.5|
-  |max_depth|6|5|6|6|6|6|6|6|
-  |min_child_weight|7|1|1|1|4|4|7|7|
-  |colsample_bytree|1|1|0.5|1|0.5|1|1|0.5|
-  |subsample|1|1|1|1|1|1|1|1|
-
-  *<b>도표.13</b> XGB 평가에서 최종적으로 사용한 hyperparmeter 목록*
-  
-#### 평가 기준
+### 평가 기준
 
 - metric : RMSE, MAPE, $R^2$ score
-- 각 metric에 대해 test1과 test2에서의 값에 조화 평균을 취한 값을 기준으로, 각 metric 별 순위를 매김
+- metric 별 성능에 가중치를 적용한 뒤 조화 평균으로 순위를 메김
   - 산술, 기하 평균에 비해 조화 평균은 값들 간의 차이가 크지 않은 것을 상대적으로 높게 평가
-  - training set에 포함됐는지 여부에 큰 차이 없이 고르게 잘 예측하는 모델을 목표로 하기 때문에 조화 평균을 사용
-- metric 별 성능 순위 간에 조화 평균을 구한 뒤 순위를 메겨, 실험 별로 각각 모델들의 순위 및 best model을 결정
+  - 세 metric에 대하여 고루 잘 예측하는 모델을 목표로 하기 때문에 조화 평균을 사용
 
 #### 모델 평가
 
@@ -356,108 +223,7 @@
 
   *<b>도표.16</b> Expt.1에서 두 평가에 대해 조화평균을 취하고 순위를 매긴 결과*
 
-  - Best model
-    - hyperparameter : h3
-      - *num_boost_round* : 2500
-      - *learning_rate* : 0.3
-      - *max_depth* : 6
-      - *min_child_weight* : 1
-      - *colsample_bytree* : 1
-      - *subsample* : 1
-
-    ![h3_rslt](./imgs/h3_rslt.png)
-    *<b>도표.17</b> Expt.1의 test1에서 best model의 예측값 및 오차 분포와 성능*
-
-    ![h3_fi](./imgs/h3_fi.png)
-    *<b>도표.18</b> Expt.1의 best model의 feature importance*
-
-- *Expt.2*
-  - 학습 결과
-
-  | **test1**|        h0 |        h1 |        h2 |        h3 |        h5 |        h7 |       h10 |       h12 |
-  |:---------|----------:|----------:|----------:|----------:|----------:|----------:|----------:|----------:|
-  | RMSE     | 811.29    | 627.17    | 617.09    | 622.17    | 610.71    | 611.44    | 651.01    | 651.38    |
-  | MAPE     |   0.08259 |   0.06514 |   0.06445 |   0.06215 |   0.06243 |   0.06266 |   0.06339 |   0.06427 |
-  | R2_SCORE |   0.95312 |   0.97199 |   0.97288 |   0.97243 |   0.97344 |   0.97337 |   0.96982 |   0.96978 |
-
-  *<b>도표.19</b> Expt.2에서 test set으로 평가한 결과*
-
-  | **test2**|         h0 |         h1 |         h2 |         h3 |         h5 |         h7 |        h10 |        h12 |
-  |:---------|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|
-  | RMSE     | 1569.41    | 1438.37    | 1482.96    | 1588.16    | 1440.4     | 1445.24    | 1746.74    | 1718.45    |
-  | MAPE     |    0.13521 |    0.1431  |    0.15337 |    0.14704 |    0.14448 |    0.14406 |    0.15631 |    0.15414 |
-  | R2_SCORE |    0.89826 |    0.91454 |    0.90916 |    0.89581 |    0.91429 |    0.91372 |    0.87396 |    0.87801 |
-
-  *<b>도표.20</b> Expt.2에서 test set 중 train set에 포함된 적 없는 종류의 도서들에 대해 평가한 결과*
-
-  | **평균** |         h0 |        h1 |        h2 |        h3 |      <b>  h5</b> |        h7 |      h10 |       h12 |
-  |:---------|-----------:|----------:|----------:|----------:|-----------------:|----------:|---------:|----------:|
-  | RMSE     | 1069.64    | 873.48    | 871.52    | 894.07    | <b>857.75   </b> | 859.33    | 948.51   | 944.67    |
-  | MAPE     |    0.10254 |   0.08953 |   0.09076 |   0.08737 | <b>  0.08718</b> |   0.08733 |   0.0902 |   0.09072 |
-  | R2_SCORE |    0.92488 |   0.94239 |   0.93994 |   0.93255 | <b>  0.94294</b> |   0.9426  |   0.9194 |   0.92162 |
-  | 종합순위 |   14       |   2       |   3       |   4       | <b>  0      </b> |   1       |   8      |  10       |
-
-  *<b>도표.21</b> Expt.2에서 두 평가에 대해 조화평균을 취하고 순위를 매긴 결과*
-
-  - Best model
-    - hyperparameter : h5
-      - *num_boost_round* : 2500
-      - *learning_rate* : 0.3
-      - *max_depth* : 6
-      - *min_child_weight* : 4
-      - *colsample_bytree* : 1
-      - *subsample* : 1
-
-    ![h5_rslt](./imgs/h5_rslt.png)
-    *<b>도표.22</b> Expt.2의 test1에서 best model의 예측값 및 오차 분포와 성능*
-
-    ![h5_fi](./imgs/h5_fi.png)
-    *<b>도표.23</b> Expt.2 의 best model의 feature importance*
-
-- *Expt.3*
-  - 학습 결과
-
-  | **test1**|         h0 |         h1 |         h2 |         h3 |         h5 |         h7 |       h10 |       h12 |
-  |:---------|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|----------:|----------:|
-  | RMSE     | 1978.75    | 1173.79    | 1081.24    | 1030.94    | 1040.43    | 1060.22    | 981.41    | 995.98    |
-  | MAPE     |    0.1986  |    0.12    |    0.10984 |    0.10306 |    0.10446 |    0.10569 |   0.09728 |   0.09868 |
-  | R2_SCORE |    0.72113 |    0.90187 |    0.91673 |    0.9243  |    0.9229  |    0.91994 |   0.9314  |   0.92935 |
-
-  *<b>도표.24</b> Expt.3에서 test set으로 평가한 결과*
-
-  | **test2**|         h0 |         h1 |         h2 |         h3 |         h5 |         h7 |        h10 |        h12 |
-  |:---------|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|
-  | RMSE     | 3324.69    | 3189.42    | 3262.41    | 3298.67    | 3180.58    | 3228.48    | 3428.1     | 3377.55    |
-  | MAPE     |    0.40055 |    0.38649 |    0.38991 |    0.39703 |    0.3851  |    0.38697 |    0.42367 |    0.42468 |
-  | R2_SCORE |    0.54339 |    0.57979 |    0.56034 |    0.55051 |    0.58212 |    0.56944 |    0.51455 |    0.52876 |  
-
-  *<b>도표.25</b> Expt.3에서 test set 중 train set에 포함된 적 없는 종류의 도서들에 대해 평가한 결과*
-
-  | **평균** |         h0 |         h1 |         h2 |         h3 |         h5 |         h7 |       <b> h10</b> |        h12 |
-  |:---------|-----------:|-----------:|-----------:|-----------:|-----------:|-----------:|------------------:|-----------:|
-  | RMSE     | 2480.93    | 1716.03    | 1624.19    | 1570.92    | 1567.95    | 1596.25    | <b>1525.96   </b> | 1538.33    |
-  | MAPE     |    0.26554 |    0.18313 |    0.17139 |    0.16364 |    0.16434 |    0.16603 | <b>   0.15823</b> |    0.16015 |
-  | R2_SCORE |    0.61977 |    0.70583 |    0.69554 |    0.69004 |    0.71393 |    0.70345 | <b>   0.66289</b> |    0.67403 |
-  | 종합순위 |   14       |    7       |   10       |    5       |    1       |    6       | <b>   0      </b> |    2       |
-
-  *<b>도표.26</b> Expt.3에서 두 평가에 대해 조화평균을 취하고 순위를 매긴 결과*
-
-  - Best model
-    - hyperparameter : h10
-      - *num_boost_round* : 2500
-      - *learning_rate* : 0.5
-      - *max_depth* : 6
-      - *min_child_weight* : 1
-      - *colsample_bytree* : 1
-      - *subsample* : 1
-
-    ![h10_rslt](./imgs/h10_rslt.png)
-    *<b>도표.27</b> Expt.2의 test1에서 best model의 예측값 및 오차 분포와 성능*
-
-    ![h10_fi](./imgs/h10_fi.png)
-    *<b>도표.28</b> Expt.3 의 best model의 feature importance*
-
-## 6. 결과 분석
+## 7. 결과 분석
 
   ||Expt.1|Expt.2|Expt.3|
   |:-|-:|-:|-:|
@@ -467,52 +233,41 @@
   |R2 SCORE|0.94074|0.94294|0.66289|
 
   *<b>도표.29</b> 각 실험 별 best model과 성능*
-  
-- feature importance 분석 결과를 바탕으로 중고가 예측에 정가, 도서 명, 중고 등급 등이 주요한 역할을 하는 것을 확인
-- 세일즈 포인트가 있을 때(Expt.1)가 없을 때(Expt.2, Expt.3)에 비해, default hyperparameter의 단순한 모델에서도 학습에서 본 적 없는 종류의 도서(test2)에 대해서도 예측 성능의 차이가 적었음
-  - default hyperparameter가 아닌 경우, 세일즈 포인트를 제외해도 학습된 모델의 성능에 큰 차이가 없었음
-  - h3의 경우 R2 SCORE과 RMSE로 보이는 성능이 다른 hyperparameter에 비해 떨어져도, MAPE에서는 더 높았음
-    - test1에서만 MAPE의 성능이 다른 모델에 비해서 좋았던 것이 아니기 때문에, h1,h5,h7의 과적합이 방지된 모델을 더욱 튜닝하면 성능을 올릴 수 있을 것이라 유추할 수 있음
-- num_boost_round가 큰 모델이 전반적으로 성능이 좋았으나, min_child_weight, colsample_bytree 등으로 과적합에 대해 방지된 모델들이 Expt.1, Expt.2의 test2에서 더 안정적인 결과가 나온 것을 확인
-  - h1,h5,h7의 경우는 Expt.2와 Expt.1에서의 성적에 큰 차이가 없거나, Expt.2에서 더 좋은 성능을 보였음
-  - 정가가 포함되지 않은 상황에서 할인율을 잘 맞추는(Expt.4에서 성능을 보인) hyperparameter가 Expt.1, Expt.2의 test2에서도 전반적으로 강건할 것이라는 예상이 아주 틀리지는 않았음
-- GridSearchCV 과정 중에 더 높은 validation 성적을 보였던 경우가 항상 최고의 성능을 보이지는 않았음
-  - 다만 상위권의 hyperparameter가 상위권의 성능을 유지하는 것을 확인했음
-  - 또한 test2의 성능에 맞춰서 튜닝하기 위해서는 test2에 맞게 만들어진 validation set을 설정해야 함을 확인
-- 정가를 학습 데이터에 포함하지 않았을 때, train set에 등장 한 적 없는 종류의 도서에 대해서는 중고 판매가 예측 성능이 많이 떨어지는 것을 발견
-  - 정가가 포함되어 있는 경우 best model에서 total_gain 기준 feature importance가 매우 큰 것을 확인 할 수 있음
-  - Expt.1, Expt.2에서 learning rate가 높은 hyperparameter는 과적합으로 성능이 좋지 않으나, Expt.3에서는 더 복잡한 모델이 필요하여 성능이 더 잘나온 것으로 유추할 수 있음
 
-## 7. 결론 및 한계
+## 8. 결론 및 한계
 
 ### 결론
 
-- default hyperparameter의 XGBoost 등 단순한 모델로도 높은 성능의 모델 개발 가능한 데이터 셋
-  - 간단한 모델과 default hyperparmeter로도 높은 성능이 나오는 것으로 보아, 알라딘 중고매장에서 중고 도서 판매 가격을 산정하는 가이드라인이 있을 것이라 추측 가능
-- 도서 명, 중고 등급, 정가, 출판일, 저자 등 실물 중고 도서에서 간단히 확인 가능한 특징만으로도 높은 성능이 충분히 가능
-- 세일즈 포인트가 중고가 예측에 큰 도움을 줄 수 있으나, 더 높은 성능의 모델을 학습시키기 위해서는 모델의 복잡도를 높히되 과적합을 방지하는 쪽이 더 유리한 것을 확인 했음
-- train set에서 중고 시세를 학습한 적 없는 종류의 도서에 대한 중고가에 대해서도 좋은 성능으로 예측한 것, best model들의 feature importance 등을 고려하면, NLP한 결과가 모델에 충분히 반영되었음을 알 수 있음
-- validation set을 통해 hyperparameter 튜닝을 하기 위해서는, test set의 성질을 잘 대표해야 함을 확인함
-  - 다만 validation set과 비슷한 성질을 가지지 않은 test set을 이용하여 어떤 모델이 더 강건할지 예측하는 것은 의미가 있음
-- Neural Network를 이용한 더 복잡한 모델을 이용하면, 정가 없이 중고도서 할인율을 예측하거나 도서 정보로 정가를 예측하는 모델을 만들 때 더 높은 성능을 보일 수 있을 것이라 추측
+- 간단한 Machine-learning 모델과 multilayer perceptron으로는 성능이 
 
 ### 한계 평가
 
-- Grid Search보다 Bayesian Search 등 보다 효율적인 hyperparameter 탐색법을 이용했으면, 연산량을 보다 효율적으로 활용할 수 있었을 것이라 기대
-- 정가를 데이터 셋에 포함하지 않는 상황에서도 성능을 높히는 것이 가능할 것 같으나 시도하지 못했음
-  - 정가를 포함하지 않았을 때, train set에 없는 데이터에 대해서는 중고 판매가 예측 성능이 많이 떨어지는 것을 발견
-  - XGB로는 한계가 있고, Neural Network를 이용해야 할 것으로 예상
+- 정가 예측에 큰 도움을 줄 수 있는 추가적인 정보(제본 형태, 쪽수 등)를 데이터셋에 추가하지 않고 학습 진행
+- Attention을 이용한 다양한 모델, 특히 attention layer로만 구성된 모델을 이용한 학습을 시도해보지 못함
+- 행렬 계산을 이용한 Transformer 모델이 연산속도 측면에서 갖는 장점을 충분히 활용했는지 평가 필요
+  - d_model의 값이 커도 모델의 step 당 연산 속도에 큰 영향을 주지 않는 것이 연산 속도 측면에서 큰 장점
+  - d_model의 값이 크면 parameter의 개수가 많아지므로, 원활한 학습에 필요한 데이터 양, step 등이 커질 수 있음
+  - 따라서 d_model의 값을 설정할 때 한계가 있는 상황인데, 데이터 셋을 확장하는 등 d_model을 늘려도 괜찮을 수 있는 조치를 취하지 않음
+- 학습시 연산 자원을 효율적으로 사용했는지 의문이 있음
+  - 학습 과정에서 RAM과 GPU 자원의 사용률이 10% 내외였던 것을 감안하면, 더 효율적인 방법이 있는지 찾아보는 것이 필요했음
+  - Dataloader를 만드는 과정에서 GPU에 할당할 경우, num_worker를 설정할 수 없는 것을 우회하는 방향을 시도해보지 못함
 - 저자명, 출판사를 인코딩 중 기타 항목으로 처리할 때 threshold 기준의 구체적인 근거를 제시하지 못 함
-  - 알라딘의 Sales Point 및 개인적 경험에서의 인지도를 바탕으로 결정
   - 추가적인 조사를 통해 더 객관적이고 제시 가능한 근거 확립 가능
 
-## 8. 추후 과제
+## 9. 추후 과제
 
-- RNN 등 Neural Network를 이용한 회귀 모델 개발
-- 중고 판매가 예측 모델 외에도 다양한 모델 개발 가능
-  - 카테고리와 도서 명, 출판사, 출간 연도 등의 정보로 정가 예측
+- 학습 및 예측 속도를 향상시키기 위해 할 수 있는 조치를 조사
+- d_model, d_ff, head 개수, N 등의 모델 구조 관련 hyperparameter를 변경했을 때 성능이 어떻게 달라지는지 탐구
+- Attention layer만을 이용한 모델 개발 및 성능 비교
+  - 단어 corpus를 다른 열의 내용에 대하여도 확장하거나, 다른 embedding model로 vector화 된 정보들이 섞여있을 경우 학습에 주의 할 점 조사
+- 데이터를 보강하여 학습에 수월한 질 좋은 데이터셋 구성
+  - 도서 정보 페이지에 정보 중, 도서 정가에 직접적인 영향을 주는 다른 정보(제본형태, 쪽수 등)를 추가적으로 크롤링
+  - 베스트 셀러에 포함된 적 없는 도서도 대상으로 하기 위한 크롤링 방법 개발 필요
+- 위의 모델 외에도 다양한 모델 개발 가능
   - 카테고리와 도서 명, 출판사, 정가 등의 정보로 출간 연도 예측
   - 도서 정보 및 중고 시장에서의 가격을 바탕으로 알라딘의 SalesPoint 산정법 추정
-- 배포 가능한 알라딘 중고도서 데이터 셋으로 정리하여 공개
-- 베스트 셀러 이외의 도서, 공식 매점에서 판매하지 않는 도서 등으로 데이터 셋 및 프로젝트 확장
-  - 베스트 셀러에 포함된 적 없는 도서도 대상으로 하기 위한 크롤링 방법 개발 필요
+
+## 10. 참고문헌
+
+- [VSPU17](https://arxiv.org/abs/1706.03762) : Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
+- [K19](https://github.com/hyunwoongko/transformer/tree/master) : hyunwoongko, transformer, GitHub, 2019

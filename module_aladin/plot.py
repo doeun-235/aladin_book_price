@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 import seaborn as sns
+from itertools import product
 
 import matplotlib_inline.backend_inline
 matplotlib_inline.backend_inline.set_matplotlib_formats("png2x")
@@ -16,6 +17,8 @@ font_list = fm.findSystemFonts(fontpaths=None, fontext='ttf')
 [fm.FontProperties(fname=font).get_name() for font in font_list if 'D2C' in font]
 plt.rc('font', family='D2Coding')
 mpl.rcParams['axes.unicode_minus'] = False
+
+from module_aladin.util import get_vals_range, get_amp
 
 ## FUNCTIONS - PLOTTING
 
@@ -98,3 +101,26 @@ def pair_plot_feat_hue(fig,axes,data:dict,pair_plot,axis_share=False,hue_label_d
         ax.set_xlabel(str_cutter(feat_name,20),loc='left',fontsize = 8.3,color=color)
     return fig,axes
 
+def plot_area(val,decrease=True,start=0,end=-1,log=True):
+  mov_val, lim_val = get_vals_range(val,decrease)
+  fig,axes = plt.subplots(1,4,figsize=(16,4))
+  mov_df=pd.DataFrame(mov_val)[start:end]
+  mov_amp = pd.DataFrame(get_amp(mov_df))
+  lim_df=pd.DataFrame(lim_val)[start:end]
+  lim_amp = pd.DataFrame(get_amp(lim_df))
+  axes[0].plot(mov_df,linewidth=0.45,label=mov_df.columns)
+  axes[2].plot(mov_amp,linewidth=0.45,label=mov_amp.columns)
+  axes[1].plot(lim_df,linewidth=0.45,label=lim_df.columns)
+  axes[3].plot(lim_amp,linewidth=0.45,label=lim_amp.columns)
+  
+  titles = list(map(lambda x : f'{x[1]}_{x[0]}',
+                product(['value','width'],['moving','lim'])))
+  for title,ax in zip(titles,axes):
+    ax.set_title(title,fontsize=17)
+    if log : ax.set_yscale('log')
+    for line in ax.get_lines():
+      name = line.get_label()
+      if 'avg' in name : line.set(lw=0.65,color='#55A235')
+      elif 'real' in name : line.set(lw = 0.3, alpha=0.8)
+    ax.legend(fontsize=10)
+  return fig,axes
