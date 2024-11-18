@@ -8,7 +8,7 @@
 
 - [알라딘 중고도서 가격 예측 프로젝트](https://github.com/kdt-3-second-Project/aladin_usedbook)에서 정가 column을 학습 데이터에서 제외하면 성능이 급격히 낮아진 것에 착안
 - 데이터 셋에 포함된 도서 정보 중, 도서명이 중요한 독립변수 중 하나이므로 자연어 문장의 의미를 파악하는 것이 중요하리라 예상
-- Attention을 이용한 Transformer는 자연어 처리에서 맥락적 의미를 수치화하는데 특출난 성능과 연산속도를 보여 인공지능사에 한 획을 그은 모델
+- Attention을 이용한 Transformer[[1]][(VSPU17)]는 자연어 처리에서 맥락적 의미를 수치화하는데 특출난 성능과 연산속도를 보여 인공지능사에 한 획을 그은 모델
 
 ### 목표
 
@@ -73,7 +73,7 @@
   - train : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 101,173건
   - valid : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 25,294건
   - test : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 31,617건
-- Transformer의 ncoder를 응용하여 도서 정가 예측에 효과적인 모델 설계
+- Transformer의 encoder를 응용하여 도서 정가 예측에 효과적인 모델 설계
   - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 단순한 Multilayer Perceptron 모델과 성능 비교
 - RMSE, MAPE, R2 Score 등의 회귀 평가 지표를 사용하여 성능을 각 모델 별로 분석
 - 모델의 hyperparameter에 따른 성능의 차이 확인
@@ -134,30 +134,42 @@
 - **INPUT** : (*batch_size*, 64) | **OUTPUT** : (*batch_size*, 1)
 - self attention layer 기반의 encoder(이하 attention based encoder)에 Multilayer perceptron (이하 MLP) layer들을 연장한 모델
   - self attention layer는 행렬곱 및 내적의 연장이기 때문에, 병렬계산이 가능하고 parameter 수가 같다면 MLP에 비해 연산이 빠름
-  - attention layer를 적극적으로 이용한 Transformer는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
+  - attention layer를 적극적으로 이용한 Transformer[[1]][(VSPU17)]는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
   - 이번 과제도 단어가 나열됐을 때 형성되는 맥락과 관련되어 있다 이해할 수 있기 때문에, attention based encoder 모델이 효과적일 수 있을 것이라 예상
-- attention based encoder 내부에 Transformer에 사용된 encoder submodule을 N=6층 쌓고, 3층의 MLP를 연장함
-- **attention based encoder** : (*batch_size*, 60) -> (*batch_size*, *d_model* , 60)
+- attention based encoder 내부에 Transformer에서 사용된 encoder submodule을 N=6층 쌓고, 3층의 MLP를 연장
+- **[attention based encoder](./module_aladin/attention_based_model.py)** : (*batch_size*, 60) -> (*batch_size*, *d_model* , 60)
   - Transformer의 encoder submodule을 응용해서 단어가 나열된 부분의 문맥 정보를 수치화 하기 위한 의도
+  - PyTorch로 Transformer를 layer 레벨부터 구현한 코드[[2]][(K19)]를 참고하여 구현
   - corpus에 대한 정수 encoding이 사용된 [0,60] 번째에 해당하는 tensor를 입력받음
     - 모델 입력 중 Category, BName, BName_sub 정보를 사용
   - 세부 내용
 
     |입력 형태|설명|
     |:-:|-|
-    | (*batch_size*, 60)| vocab_size의 Embedding model이 *d_model* 차원의 tenseor에 대응시킴 |
+    | (*batch_size*, 60)| vocab_size 크기의 corpus를 기반으로 한 Embedding model이 *d_model* 차원의 tenseor에 대응시킴 |
     | (*batch_size*, *d_model* , 60)| multihead attention layer, feed forward layer로 이뤄진 N개의 encoder submodule를 통과 |
 
-    *<b>도표.5</b> encoder의 부분 별 설명*
+    *<b>도표.5</b> encoder module의 부분 별 설명*
 
-    |d_model |vocab_size|head |d_k |d_v |d_ff |dropout|
-    |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-    |60  | 32050   |6    |10  |10  |128  |0.1    |
+    ![attention](./imgs/attention_layer.jpg)
+    
+    *<b>도표.6.</b> <b>a.</b> attention based encoder module, <b>b.</b> scaled dot-product attention, <b>c.</b> multi-head attention [[1]][(VSPU17)]*
 
-    *<b>도표.6</b> encoder submodule 관련 hyperparameter 값*
+    |입력 형태|설명|
+    |:-:|-|
+    | (*batch_size*, 60)| vocab_size 크기의 corpus를 기반으로 한 Embedding model이 *d_model* 차원의 tenseor에 대응시킴 |
+    | (*batch_size*, *d_model* , 60)| multihead attention layer, feed forward layer로 이뤄진 N개의 encoder submodule를 통과 |
 
-- **MLP submodule** : (*batch_size*, *d_model* , 60), (*batch_size*, 4) -> (*batch_size*, 1)
-  - encoder submodule의 출력과 corpus와 무관한 feature들을 종합하여 model output 예측
+    *<b>도표.7</b> encoder submodule의 구성*
+
+    |d_model |vocab_size|N|head |d_k |d_v |d_ff |dropout|
+    |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+    |60  | 32050   |6|6    |10  |10  |128  |0.1    |
+
+    *<b>도표.8</b> encoder submodule 관련 hyperparameter 값*
+
+- **MLP module** : (*batch_size*, *d_model* , 60), (*batch_size*, 4) -> (*batch_size*, 1)
+  - encoder module의 출력과 corpus와 무관한 feature들을 종합하여 model output 예측
     - 해당 feature : Author, Author_mul, Publshr, Pdate
   - concat layer의 output 형태를 (*batch_size*, *d_mlp*)라 하면, *d_mlp* = *d_model* * 60 + 4
   - 활성화 함수 : ReLU, dropout : 0.1 적용
@@ -168,9 +180,9 @@
     | (*batch_size*, *d_model* , 60), (*batch_size*, 4) | attention based encoder의 output과 model input 중 정수 encoding이 되지 않은 정보를 concat |
     | (*d_mlp*, *d_mlp* // 2) | 활성화 함수 및 dropout이 적용된 linear layer|
     | (*d_mlp* // 2, *d_mlp* // 2) | 활성화 함수 및 dropout이 적용된 linear layer|
-    | (*d_mlp* // 2, 1) | linear layer|
+    | (*d_mlp* // 2, 1) | model output으로 연결되는 linear layer|
 
-    *<b>도표.7</b> MLP submodule의 layer별 설명*
+    *<b>도표.8</b> MLP submodule의 layer별 설명*
   
 <!--모델 구조도-->
 
@@ -178,21 +190,22 @@
 
 ### 개요
 
-- 모델 성능은 RMSE, MAPE, R2 Score 등을 활용하여 평가
+- 모델 성능은 RMSE, MAPE, $R^2$ Score 등을 활용하여 평가
 - attention based encoder 모델 및 학습에서의 hyperparameter를 변경하며 학습 성능 평가
   - **batch size** : 256, 512, 4,096, 65,536에 대해서 실험 진행
     - *learning rate* : batch size에 맞게 초기 learning rate를 정한 뒤 학습 상황에 따라 감소시켜 적용
   - **head** : 3, 6, 12에 대해서 실험 진행
 - 모델 성능의 평가를 위해 XGBoost, Random Forest Regressor 모델, 간단한 MLP모델과 성능 비교
 
+<!--
 ### 평가 기준
 
 - metric : RMSE, MAPE, $R^2$ score
 - metric 별 성능에 가중치를 적용한 뒤 조화 평균으로 순위를 메김
   - 산술, 기하 평균에 비해 조화 평균은 값들 간의 차이가 크지 않은 것을 상대적으로 높게 평가
   - 세 metric에 대하여 고루 잘 예측하는 모델을 목표로 하기 때문에 조화 평균을 사용
-
-#### 모델 평가
+-->
+### 모델 평가
 
 - 가독성을 고려하여 15개의 hyperparameter 중 각 실험에서 3위 안에 든 hyperparameter의 모음에 default(h0)를 포함한 8종에 대한 결과만 추려서 정리
 - *Expt.1*
@@ -269,5 +282,8 @@
 
 ## 10. 참고문헌
 
-- [VSPU17](https://arxiv.org/abs/1706.03762) : Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
-- [K19](https://github.com/hyunwoongko/transformer/tree/master) : hyunwoongko, transformer, GitHub, 2019
+1. [VSPU17][(VSPU17)]: Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
+2. [K19][(K19)]: hyunwoongko, transformer, GitHub, 2019
+
+[(VSPU17)]:https://arxiv.org/abs/1706.03762 "VSPU17"
+[(K19)]:https://github.com/hyunwoongko/transformer/tree/master "K19"
