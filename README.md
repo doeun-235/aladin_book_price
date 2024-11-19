@@ -1,6 +1,6 @@
-# 알라딘 베스트셀러 데이터셋을 이용한 attention encoder 기반 서적 가격 예측 모델
+# 알라딘 베스트셀러 데이터셋을 이용한 encoder-only transformer 도서 정가 예측 모델
 
-**사용된 스킬 셋**: NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, PyTorch, [Mecab](https://pypi.org/project/python-mecab-ko/)
+**사용된 스킬 셋**: PyTorch, NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
 ## 1. 프로젝트 개요
 
@@ -18,7 +18,7 @@
 - 기타 모델과 여러 성능 지표 및 실험을 통하여 Attention 기반 모델의 성능을 적절히 평가
   - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 Multilayer Perceptron 모델과 성능 비교
 
-## 2. 데이터 셋
+## 2. 데이터 셋 [[1]][(OLPJ24)]
 
 ### 1) 개요
 
@@ -44,8 +44,6 @@
   - **카테고리** : 도서가 어떤 장르에 속하는지에 대한 정보. 외국어, 종교, 사회과학, 건강/취미 등 총 24개 유형으로 분류
   - **세일즈 포인트**
     - 판매량과 판매기간에 근거하여 해당 상품의 판매도를 산출한 알라딘만의 판매지수이며, 매일 업데이트 됨
-    - 최근 판매분에 가중치를 두어, 팔릴수록 올라가고 덜 팔리면 내려감
-    - 최근 베스트셀러는 점수가 높으며, 꾸준히 팔리는 스테디셀러들도 어느 정도 점수를 유지
 - 날짜 및 랭킹을 제외하고, 판매가, 세일즈 포인트 등은 크롤링 시점에서의 값이 저장됨
 
 ![image](https://github.com/user-attachments/assets/8d74d9a6-3423-4bd3-b0a0-27817761de9c)
@@ -78,11 +76,9 @@
 - RMSE, MAPE, R2 Score 등의 회귀 평가 지표를 사용하여 성능을 각 모델 별로 분석
 - 모델의 hyperparameter에 따른 성능의 차이 확인
 
-## 4. [전처리](./code/)
+## 4. [전처리](./code/) [[1]][(OLPJ24)]
 
-### 1) 전체 과정
-
-#### [베스트 셀러 목록 전처리](./code/step2_preprocess_bookinfo.py)
+### [베스트 셀러 목록 전처리](./code/step2_preprocess_bookinfo.py)
 
 - 결측치 처리
   - 저자 명, 구분, 출판사, 카테고리 등에 결측치가 있는 행의 개수 1,214개
@@ -112,7 +108,7 @@
 - 출간일 : DateTime 타입으로 파싱
 - ItemId, 정가, 판매가 : 정수 형태로 변환
 
-#### [인코딩 및 스케일링](./research/240716_encoding_bookinfo.ipynb)
+### [인코딩 및 스케일링](./research/240716_encoding_bookinfo.ipynb)
 
 - validation 및 test set의 데이터가 전처리에 영향을 주지 않도록 주의하여 진행
   - train set을 전처리 하면서 결정된 함수 및 관련 내용들을 validation 및 test set에 일괄적으로 적용
@@ -135,7 +131,7 @@
 - self attention layer 기반의 encoder(이하 attention based encoder)에 multilayer perceptron (이하 MLP) layer들을 연장한 모델
   - self attention layer는 행렬곱 및 내적의 연장이기 때문에, 병렬계산이 가능하고 parameter 수가 같다면 MLP에 비해 연산이 빠름
   - attention layer를 적극적으로 이용한 Transformer[[2]][(VSPU17)]는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
-  - 이번 과제도 단어가 나열됐을 때 형성되는 맥락과 관련되어 있다 이해할 수 있기 때문에, attention based encoder 모델이 효과적일 수 있을 것이라 예상
+  - 이번 과제도 단어가 나열됐을 때 형성되는 맥락과 관련되어 있다 이해할 수 있기 때문에, encoder-only Transformer 모델이 효과적일 수 있을 것이라 예상
 - attention based encoder 내부에 Transformer에서 사용된 encoder submodule을 N=6층 쌓고, 3층의 MLP를 연장
 - **[attention based encoder](./module_aladin/attention_based_model.py)** : (*batch_size*, 60) $\rightarrow$ (*batch_size*, *d_model* , 60)
   - Transformer의 encoder submodule을 응용해서 단어가 나열된 부분의 문맥 정보를 수치화 하기 위한 의도
@@ -198,8 +194,8 @@
 - 두 가지 방법으로 평가 진행
   - *test 1* : 전체 데이터에 대해서 평가
   - *test 2* : 정가가 60,000원 이하인 데이터에 대해서 평가
-    - 정가 60,000원 이하인 데이터가 대부분
-    - Train, Valid, Test 각각 %,%,%
+    - 정가 60,000원 이하인 데이터가 99.484%
+    - Train, Valid, Test 각각 99.481%, 99.541%, 99.450%
 - attention based encoder 모델 및 학습에서의 hyperparameter를 변경하며 학습 성능 평가
   - **batch size** : 512, 8192, 16384에 대해 실험 진행
   - *learning rate* : batch size에 맞게 초기 learning rate를 정한 뒤 학습 상황에 따라 감소시켜 적용
@@ -249,9 +245,26 @@
 ### 대조군 모델
 
 - 동일한 방식으로 전처리한 데이터를 이용하여 회귀 예측 모델 설계
-- **Random Forest Regressor** : 기본 hyperparameter로 진행
+- **Random Forest Regressor** (이하 RFR) : 기본 hyperparameter로 진행
   - 성능
-- **XGBoost Regressor**
+
+    | **test1**|       Train |       Valid |        Test |
+    |:---------|------------:|------------:|------------:|
+    | RMSE     | 3175.18     | 8179.46     | 9079.71     |
+    | MAPE     |    0.106272 |    0.298254 |    0.301357 |
+    | R2_SCORE |    0.916681 |    0.373757 |    0.376662 |
+  
+    *<b>도표.</b> 전체 데이터에 대한 RFR model 성능*
+
+    | **test2**|       Train |       Valid |        Test |
+    |:---------|------------:|------------:|------------:|
+    | RMSE     | 2215.93     | 6188.06     | 6078.94     |
+    | MAPE     |    0.105727 |    0.29688  |    0.299907 |
+    | R2_SCORE |    0.926039 |    0.418558 |    0.444744 |
+
+    *<b>도표.</b> 정가 60,000 이하 데이터에 대한 RFR model 성능*
+
+- **XGBoost Regressor** (이하 XGB)
   - 독립변수가 동일한 알라딘 중고도서 가격 예측[[1]][(OLPJ24)]의 Expt.4에서 가장 성능이 좋았던 hyperparameter로 진행
 
     |*num_boost_round*|  *learning_rate*|  *max_depth*|
@@ -264,7 +277,23 @@
   
     *<b>도표.</b> XGBoost 관련 hyperparameter*
   - 성능
-  
+
+    | **test1**|       Train |       Valid |        Test |
+    |:---------|------------:|------------:|------------:|
+    | RMSE     | 8083.08     | 8429.75     | 9544.35     |
+    | MAPE     |    0.351907 |    0.36065  |    0.366424 |
+    | R2_SCORE |    0.460038 |    0.334845 |    0.311233 |
+
+    *<b>도표.</b> 전체 데이터에 대한 XGBoost model 성능*
+
+  | **test2**|       Train |       Valid |        Test |
+  |:---------|------------:|------------:|------------:|
+  | RMSE     | 5947.53     | 6333.92     | 6321.06     |
+  | MAPE     |    0.350769 |    0.359319 |    0.36484  |
+  | R2_SCORE |    0.467198 |    0.390825 |    0.399632 |
+
+    *<b>도표.</b> 정가 60,000 이하 데이터에 대한 XGBoost model 성능*
+
 - **MLP Regressor**
   - 5개 층으로 구성하여 학습 진행, 활성화 함수는 ReLU
   - 세부 사항
@@ -290,23 +319,25 @@
     *<b>도표.</b> MLP model 학습 hyperparameter*
   - 학습 결과
   
-  ||Train|Valid|Test|
+  |**test1**|Train|Valid|Test|
   |-|-:|-:|-:|
   |RMSE|8638.70|8893.68|10034.56|
   |MAPE|0.37203|0.38830|0.39802|
   |R2 SCORE|0.38263|0.26371|0.23795|
   
-  *<b>도표.</b> MLP model 성능* 
+  *<b>도표.</b> 전체 데이터에 대한 MLP model 성능* 
 
 ## 7. 결과 분석
 
-  ||Encoder based model|RFR|XGB|MLP|
-  |:-|-:|-:|-:|-:|
-  |RMSE|858.95|857.75|1525.96||
-  |MAPE|0.08583|0.08718|0.15823||
-  |R2 SCORE|0.94074|0.94294|0.66289||
+|        |Encoder-only Transformer|        RFR |        XGB  |        MLP  |
+|--------|-----------------------:|-----------:|------------:|------------:|
+|RMSE    || 9079.71    | 9544.35     | 10034.56    |
+|MAPE    ||    0.30136 |    0.36642  |    0.39802  |
+|R2 SCORE||    0.37666 |    0.31123  |    0.23795  |
 
-  *<b>도표.29</b> 각 실험 별 best model과 성능*
+*<b>도표.</b> 각 실험 별 best model과 성능*
+
+- 안녕
 
 ## 8. 결론 및 한계
 
@@ -318,18 +349,13 @@
 
 - 정가가 outlier에 해당하는 데이터를 학습에서 제외했을 때 성능이 개선되는지 확인 필요
 - 도서 정가가 보통 1000원 단위로 결정되고, 100원 단위 미만으로는 대부분 값이 비어있는 특징을 encoder based model 학습에는 반영하지 못했음
-  - RFR, XGB의 경우 성능이 향상되는 것을 확인(?)
-  - 해당 특징을 반영했을 때 학습 효율성이 더 높아질 수 있음
   - parameter 양자화를 하면, 학습 및 추론 속도도 향상될 수 있음
 - 정가 예측에 큰 도움을 줄 수 있는 추가적인 정보(제본 형태, 쪽수 등)를 데이터셋에 추가하지 않고 학습 진행
 - Attention을 이용한 다양한 모델, 특히 attention layer로만 구성된 모델을 이용한 학습을 시도해보지 못함
 - 행렬 계산을 이용한 Transformer 모델이 연산속도 측면에서 갖는 장점을 충분히 활용했는지 평가 필요
-  - d_model의 값이 커도 모델의 step 당 연산 속도에 큰 영향을 주지 않는 것이 연산 속도 측면에서 큰 장점
-  - d_model의 값이 크면 parameter의 개수가 많아지므로, 원활한 학습에 필요한 데이터 양, step 등이 커질 수 있음
-  - 따라서 d_model의 값을 설정할 때 한계가 있는 상황인데, 데이터 셋을 확장하는 등 d_model을 늘려도 괜찮을 수 있는 조치를 취하지 않음
-- 학습시 연산 자원을 효율적으로 사용했는지 의문이 있음
-  - 학습 과정에서 RAM과 GPU 자원의 사용률이 10% 내외였던 것을 감안하면, 더 효율적인 방법이 있는지 찾아보는 것이 필요했음
-  - Dataloader를 만드는 과정에서 GPU에 할당할 경우, num_worker를 설정할 수 없는 것을 우회하는 방향을 시도해보지 못함
+  - *d_model*의 값이 커도 모델의 step 당 연산 속도에 큰 영향을 주지 않는 것이 연산 속도 측면에서 큰 장점
+  - *d_model*의 값이 크면 parameter의 개수가 많아지므로, 원활한 학습에 필요한 데이터 양, step 등이 커질 수 있음
+  - 따라서 *d_model*의 값을 설정할 때 한계가 있는 상황인데, 데이터 셋을 확장하는 등 *d_model*을 늘려도 괜찮을 수 있는 조사를 하지 않음
 - 저자명, 출판사를 인코딩 중 기타 항목으로 처리할 때 threshold 기준의 구체적인 근거를 제시하지 못 함
   - 추가적인 조사를 통해 더 객관적이고 제시 가능한 근거 확립 가능
 
