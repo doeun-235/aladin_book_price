@@ -6,19 +6,20 @@
 
 ### 배경
 
-- [알라딘 중고도서 가격 예측 프로젝트 [1]][(OLPJ24)]에서 정가 column을 학습 데이터에서 제외하면 성능이 급격히 낮아진 것에 착안
+- [알라딘 중고도서 가격 예측 프로젝트 <sub>[1]</sub>][(OLPJ24)]에서 정가 column을 학습 데이터에서 제외하면 성능이 급격히 낮아진 것에 착안
 - 데이터 셋에 포함된 도서 정보 중, 도서명이 중요한 독립변수 중 하나이므로 자연어 문장의 의미를 파악하는 것이 중요하리라 예상
-- Attention을 이용한 Transformer[[2]][(VSPU17)]는 자연어 처리에서 맥락적 의미를 수치화하는데 특출난 성능과 연산속도를 보여 인공지능사에 한 획을 그은 모델
+- Attention을 이용한 Transformer[<sub>[1]</sub>][(VSPU17)]는 자연어 처리에서 맥락적 의미를 수치화하는데 특출난 성능과 연산속도를 보여 인공지능사에 한 획을 그은 모델
 
 ### 목표
 
-- 알라딘 중고도서 가격 예측 프로젝트[[1]][(OLPJ24)]에서 구축한 데이터 셋을 이용해, 도서 정보로 정가를 예측하는 회귀 모델 개발
+- 알라딘 중고도서 가격 예측 프로젝트[<sub>[1]</sub>][(OLPJ24)]에서 구축한 데이터 셋을 이용해, 도서 정보로 정가를 예측하는 회귀 모델 개발
 - Attention 기반 모델을 PyTorch를 이용해 설계 및 학습 진행
   - Attention 및 Transformer에 대해 학습하는 차원에서 Pytorch를 이용해 직접 구현
-- 기타 모델과 여러 성능 지표 및 실험을 통하여 Attention 기반 모델의 성능을 적절히 평가
+  - *step 수*와 *learning rate* 사이에, 논문에서 소개 된 *learning rate* 관련 식[<sub>[2]</sub>][(VSPU17)]에서와 동일한 관계를 갖는지 확인
+- 기타 모델과 여러 성능 지표 및 실험을 통하여 Attention 기반 모델의 성능을 평가
   - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 Multilayer Perceptron 모델과 성능 비교
 
-## 2. 데이터 셋 [[1]][(OLPJ24)]
+## 2. 데이터 셋 [<sub>[1]</sub>][(OLPJ24)]
 
 ### 1) 개요
 
@@ -73,10 +74,10 @@
   - test : 주간 베스트셀러 순위에 오른적 있는 도서에 대한 데이터 31,617건
 - Transformer의 encoder를 응용하여 도서 정가 예측에 효과적인 모델 설계
   - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 단순한 Multilayer Perceptron 모델과 성능 비교
-- RMSE, MAPE, R2 Score 등의 회귀 평가 지표를 사용하여 성능을 각 모델 별로 분석
-- 모델의 hyperparameter에 따른 성능의 차이 확인
+  - RMSE, MAPE, R2 Score 등의 회귀 평가 지표를 사용하여 성능을 각 모델 별로 분석
+- 적절한 learning rate와 기타 hyperparameter 사이의 관계가 기존 연구[<sub>[2]</sub>][(VSPU17)]에서와 비슷한 관계를 갖는지 확인
 
-## 4. [전처리](./code/) [[1]][(OLPJ24)]
+## 4. [전처리](./code/) [<sub>[1]</sub>][(OLPJ24)]
 
 ### [베스트 셀러 목록 전처리](./code/step2_preprocess_bookinfo.py)
 
@@ -125,7 +126,11 @@
 
   *<b>도표.4</b> 전처리, 스케일링 후 최종 데이터 예시*
 
-## 5. 모델 설계
+## 5. 실험 설계
+
+### 모델 설계
+
+#### Encoder Model
 
 - **INPUT** : (*batch_size*, 64) $\rightarrow$ **OUTPUT** : (*batch_size*, 1)
 - self attention layer 기반의 encoder(이하 attention based encoder)에 multilayer perceptron (이하 MLP) layer들을 연장한 모델
@@ -135,7 +140,7 @@
 - attention based encoder 내부에 Transformer에서 사용된 encoder submodule을 N=6층 쌓고, 3층의 MLP를 연장
 - **[attention based encoder](./module_aladin/attention_based_model.py)** : (*batch_size*, 60) $\rightarrow$ (*batch_size*, *d_model* , 60)
   - Transformer의 encoder submodule을 응용해서 단어가 나열된 부분의 문맥 정보를 수치화 하기 위한 의도
-  - PyTorch로 Transformer를 layer 레벨부터 구현한 코드[[3]][(K19)]를 참고하여 구현
+  - PyTorch로 Transformer를 layer 레벨부터 구현한 코드[<sub>[3]</sub>][(K19)]를 참고하여 구현
   - corpus에 대한 정수 encoding이 사용된 [0,60] 번째에 해당하는 tensor를 입력받음
     - 모델 입력 중 Category, BName, BName_sub 정보를 사용
   - dropout은 encoder submodule의 multi-head self attention layer, feed-forward network layer에 각각 적용됨
@@ -149,7 +154,7 @@
     *<b>도표.5</b> encoder module의 구성*
 
     ![attention](./imgs/attention_layer.jpg)
-    *<b>도표.6.</b> <b>a.</b> attention based encoder module, <b>b.</b> scaled dot-product attention, <b>c.</b> multi-head attention [[2]][(VSPU17)]*
+    *<b>도표.6.</b> <b>a.</b> attention based encoder module, <b>b.</b> scaled dot-product attention, <b>c.</b> multi-head attention [<sub>[2]</sub>][(VSPU17)]*
 
     |명칭|입력 형태|설명|
     |:-:|:-:|-|
@@ -168,6 +173,8 @@
 
     *<b>도표.8</b> encoder submodule 관련 hyperparameter 값*
 
+#### 대조군
+
 - **MLP module** : (*batch_size*, *d_model* , 60), (*batch_size*, 4) $\rightarrow$ (*batch_size*, 1)
   - encoder module의 출력과 corpus와 무관한 feature들을 종합하여 model output 예측
     - 해당 feature : Author, Author_mul, Publshr, Pdate
@@ -184,33 +191,81 @@
 
     *<b>도표.9</b> MLP submodule의 layer별 설명*
   
-<!--모델 구조도-->
+<!--
 
-## 6. 학습 및 평가 결과
+### learning rate 관련 실험
 
-### 개요
+- *patience* 만큼 *score*의 개선이 없으면 *factor* 배 *learning rate*를 감소시키는 scheduling을 사용 예정
+- *learning rate*를 지수적으로 감소시키는 scheduling을 하기 위해서는 설정이 처음 Transformer가 제안 된 논문에서와 달라야 함
+  - <i>수식 1[<sub>[2]</sub>][(VSPU17)]</i>와 같이 <i>step_num<sup>-0.5</sup></i>에 비례하여 *learning_rate*를 변화시킴
+
+    ![eq](./imgs/equation.png)
+
+    *<b>수식. 1</b> Transformer 모델 제안 때 사용된 step_num에 따른 learnig rate 값*
+- 다음 내용을 가정하면, 아래의 전개를 통해 지수적으로 scheduling할 경우 <i>수식 2</i>과 같이 *initial learning rate*과 학습이 완료되는 epoch 사이 관계식을 가질 것이라 추정할 수 있다.
+  - 이 실험에 쓰인 모델에도 수식 1이 유효
+  - 전체 학습 동안의 *learning rate*의 합이 parameter가 바뀐 경로의 길이와 관련
+  - 학습의 진행 정도와 경로의 길이가 관련있고, 모델 학습이 충분히 진행되기 위해서는 경로의 길이가 특정 수치 이상이 되어야 함
+  - 동일한 optimizer를 사용했을 때, 경로의 길이가 유사하면 모델 학습도 수준에 도달할 수 있을 것이다?
+  - (간략하게 아이디어를 진행해도 될 것이다)
+-->
+
+## 6. 실험 결과
+
+### 시뮬레이션 설정
 
 - 모델 성능은 RMSE, MAPE, $R^2$ Score 등을 활용하여 평가
-- 두 가지 방법으로 평가 진행
-  - *test 1* : 전체 데이터에 대해서 평가
-  - *test 2* : 정가가 60,000원 이하인 데이터에 대해서 평가
-    - 정가 60,000원 이하인 데이터가 99.484%
-    - Train, Valid, Test 각각 99.481%, 99.541%, 99.450%
 - attention based encoder 모델 및 학습에서의 hyperparameter를 변경하며 학습 성능 평가
-  - **batch size** : 512, 8192, 16384에 대해 실험 진행
-  - *learning rate* : batch size에 맞게 초기 learning rate를 정한 뒤 학습 상황에 따라 감소시켜 적용
-  - 초기 learning rate를 제외한 학습 hyperparameter는 동일하게 적용
+- **batch size** : 20480
+- **optimizer** : Adam
+  |adam_eps|weight_decay|
+  |-:|-:|
+  |5e-7|5e-20|
 
-    |factor|adam_eps|patience|warmup|
-    |-:|-:|-:|-:|
-    |0.95|5e-7|10|3|
+  *<b>도표.10</b> optimizer 관련 hyperparameter*
+- **learning rate**
+  - 초기값을 1.5e-4 에서 5.6e-4 사이 7개의 값 중 하나로 설정해서 진행
+  - *initial learning rate* 값에 따라 20번 내외 혹은 40번 내외 시뮬레이션 시행
 
-    |epoch|clip|weight_decay|dropout|
-    |-:|-:|-:|-:|
-    |500|1.0|5e-20|0.1|
+    |init_lr| count |
+    |-:|-:|
+    |1.76e-4| 35 |
+    |2.84e-4| 39 |
+    |3.92e-4| 41 |
+    |4.46e-4| 23 |
+    |5.00e-4| 19 |
+    |5.27e-4| 19 |
+    |5.54e-4| 24 |
+    |<b>계</b>|<b>200</b>|
 
-    *<b>도표.10</b> model 학습 hyperparameter*
+    *<b>도표.11</b> initial learing rate 설정 값 별 시행 횟수*
 
+    - *init_lr* 별로 시행 횟수가 다른 것은, 20번 내외 반복한 경우 데이터를 2배로 하는 oversampling을 적용하여 보완
+  - *scheduler* : torch.optim.lr_scheduler.ReduceLROnPlateau 사용
+
+    |factor|patience|warmup|
+    |-:|-:|-:|
+    |0.95|10|3|
+  
+    *<b>도표.12</b> learning rate scheduler 관련 hyperparameter*
+
+    - *patience* 만큼의 *epoch* 동안 성능의 개선이 없으면 *lr*을 *factor*배 하여 진행
+    - 단, *warmup* 이하의 *epoch* 까지는 scheduler가 *lr* 업데이트 하지 않음
+    - e.g. 위 hyperparmeter로 550 epoch을 진행했을 때 *lr*이 최대한 감소한 경우, *init_lr*의 $0.95^{54} \sim 0.0627$배 까지 감소 가능
+
+- 기타 hyperparameter
+
+  |clip|dropout|
+  |-:|-:|
+  |1.0|0.1|
+
+  *<b>도표.13</b> model 학습 hyperparameter*
+
+  - *clip* : torch.nn.clip_grad_norm_을 적용해 gradient exploding을 방지
+    - parameter의 $L^2$ norm의 최대 값을 *clip* 값으로 제한
+- *epoch* : 각 실험 별로 early stopping 없이 550 epoch 까지 진행
+  - *best_epoch* : 학습 과정 중에 가장 *valid_loss*가 작았을 때
+- **loss funcion** : RMSE
 - 모델 성능의 평가를 위해 XGBoost, Random Forest Regressor 모델, 간단한 MLP모델과 성능 비교
 
 <!--
@@ -221,34 +276,204 @@
   - 산술, 기하 평균에 비해 조화 평균은 값들 간의 차이가 크지 않은 것을 상대적으로 높게 평가
   - 세 metric에 대하여 고루 잘 예측하는 모델을 목표로 하기 때문에 조화 평균을 사용
 -->
-### 모델 평가
+### 시뮬레이션 결과
 
-- *Expt.1* : *batch_size* = 512
-  - *init_lr* :
-  - *best_epoch* :
-  - 학습 결과
+#### *init_lr* 별 실험 결과
 
-    |RMSE|MAPE|R2 SCORE|
-    |-:|-:|-:|
-    ||||
+  ![box0](./imgs/box0.png)
+  *<b>도표.14</b> 각 init_lr 별 best_epoch 및 성적의 분포*
 
-    *<b>도표.</b> batch_size = 512 일 때 모델 성능*
+  |          |   count |    mean |     std |   min |     q1 |   median |    q3 |   max |
+  |---------:|--------:|--------:|--------:|------:|-------:|---------:|------:|------:|
+  | 0.000176 |      35 | 465.143 | 55.8001 |   355 | 423.5  |      466 | 515.5 |   550 |
+  | 0.000284 |      39 | 387.897 | 69.5591 |   234 | 338    |      379 | 435.5 |   550 |
+  | 0.000392 |      41 | 301.293 | 64.9639 |   210 | 251    |      290 | 341   |   491 |
+  | 0.000446 |      23 | 248.609 | 38.6179 |   194 | 213.5  |      243 | 284.5 |   326 |
+  | 0.0005   |      19 | 238.263 | 36.1691 |   181 | 215    |      226 | 258   |   317 |
+  | 0.000527 |      19 | 235.211 | 60.8071 |   167 | 196    |      218 | 252   |   407 |
+  | 0.000554 |      24 | 204.875 | 48.1441 |   149 | 172.75 |      186 | 245.5 |   320 |
 
-    *<b>도표.</b> batch_size = 512 일 때 참 값과 예측 값 사이 산포도*
+  *<b>도표.15</b> 각 init_lr 별 best_epoch의 분포*
+  
+  - 각 시행별 best model이 몇 번째 epoch였는지, RMSE, $R^2$ Score, MAPE는 어떻게 나오는지 확인
+  - 학습 등에 관한 hyperparameter들을 고정했을 때, 각 *init_lr* 별로 *best_epoch*가 특정 값 언저리에서 나오는 것을 확인할 수 있음
+  - *init_lr* = 1.76e-4인 경우, 다른 경우와 다르게 최종 *epoch*가 550으로 제한 된 것의 영향을 받아, RMSE 및 R2 Score의 평균적인 성능이 상대적으로 떨어지는 것으로 추론
+  
+  ![basic0](./imgs/basic_epoch0.png)
+  *<b>도표.16</b> init_lr= 0.000176일 때 best epoch 및 성적 분포*
 
-    *<b>도표.</b> batch_size = 512, 정가 60,000원 이하 일때 참 값에 따른 예측값의 histogram*
+  ![basic1](./imgs/basic_epoch1.png)
+  *<b>도표.17</b> init_lr = 0.000284일 때 best epoch 및 성적 분포*
 
-    *<b>도표.</b> batch_size = 512, 정가 60,000원 이하 일때 참 값에 따른 절대 오차의 histogram*
+  ![basic2](./imgs/basic_epoch2.png)
+  *<b>도표.18</b> init_lr = 0.000392일 때 best epoch 및 성적 분포*
 
-    *<b>도표.</b> batch_size = 512, 정가 60,000원 이하 일때 참 값에 따른 상대 오차의 histogram*
+  ![basic3](./imgs/basic_epoch3.png)
+  *<b>도표.19</b> init_lr = 0.000446일 때 best epoch 및 성적 분포*
 
-### 대조군 모델
+  ![basic4](./imgs/basic_epoch4.png)
+  *<b>도표.20</b> init_lr = 0.000500일 때 best epoch 및 성적 분포*
+
+  ![basic5](./imgs/basic_epoch5.png)
+  *<b>도표.21</b> init_lr = 0.000527일 때 best epoch 및 성적 분포*
+
+  ![basic6](./imgs/basic_epoch6.png)
+  *<b>도표.22</b> init_lr = 0.000554일 때 best epoch 및 성적 분포*
+
+  - 각 시행에서 *best_epoch*의 분포가 *init_lr*에 따라 달라지는 것을 볼 수 있음
+  - *init_lr* 별로 확인을 하였을 때, RMSE 및 $R^2$ Score가 상위권인 시행들의 *best_epoch*가 *best_epoch*의 median 및 mean 값 부근에 있는 것을 확인할 수 있음
+  - *best_epoch*가 나중에 등장했을 수록 *valid_loss*와 *train_loss*의 차가 증가하는 것으로 보아, *best_epoch*가 클수록 과적합 됐을 가능성이 높다고 추정 가능
+
+<!--
+각 init lr 별 median, mean 체크
+
+- 선형 확인 (오버샘플링)
+f(best epoch) vs init_lr
+(median, mean)
+
+- init lr vs vld loss, score, mape
+
+- init lr vs best epoch
+-->
+
+#### *init_lr*과 *best_epoch* 사이 관계
+
+- 위 실험에서는 *patience* 만큼 *score*의 개선이 없으면 *factor* 배 *learning rate*를 감소시키는 scheduling을 사용
+- *learning rate*를 지수적으로 감소시키는 scheduling을 VSPU17에서 사용된 scheduling은 큰 차이가 있기 때문에 <i>수식 1[<sub>[2]</sub>][(VSPU17)]</i>과 직접적인 비교는 쉽지 않음
+  - Transformer 모델 제안 논문에서는 <i>수식 1</i>과 같이 <i>step_num<sup>-0.5</sup></i>에 비례하여 *learning_rate*를 변화시킴
+
+    ![eq](./imgs/equation.png)
+
+    *<b>수식. 1</b> Transformer 모델 제안 때 사용된 step_num에 따른 learnig rate 값*
+- $X=\text{init\_lr}$과 $y = \text{best\_epoch}^d$ 사이에 선형회귀 분석
+  - $-3\leq d \leq 3 \text{ and } d \neq 0$ 조건을 만족하는 $d$에 대해 시뮬레이션. $0.01$ 간격으로 $d$ 값을 설정
+  - 도표.11의 7개의 *init_lr* 중 $1.76$e-4를 제외한 6개의 *init_lr*에 대해서 추정
+    - *init_lr*$=1.76$e-4의 경우 총 *epoch*가 550으로 제한된 영향을 받았기 때문
+- 위 조건을 만족하는 $d$에 대해 *init_lr*으로 *best_epoch*<sup>$d$</sup>를 선형회귀 했을 때, $d=0.52$일 때 $R^2$ Score가 0.536로 제일 큼
+
+    ![reg1](./imgs/regrslt1.png)
+  
+    *<b>도표.23</b> 차수 $d$에 따른 선형회귀 모델의 결과 지표. <b>a.</b> $R^2$ Score, <b>b.</b> RMSE*
+
+  - $d=0.52$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.537, RMSE = 54.305
+  - $d=0.03$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.539, RMSE = 54.202으로 성적이 제일 좋음
+  - 6개의 *init_lr*에 대하여 각각 38~48개의 *best_epoch* 값이 있기 때문에 $R^2$ Score는 좋은 결과를 얻기 힘듦
+  - RMSE값은 *best_epoch*의 *init_lr* 별 표준편차의 weighted mean과 비슷한 값으로 구해짐 
+    - 도표.15에서 *best_epoch* 값의 *init_lr* 별 표준편차를 weighted mean을 구하면, $56.137$이 나오고, oversampling한 것을 반영하면 $52.595$가 나옴
+
+- 위와 동일한 조건에서, 각 *init_lr*에 대해, *best_epoch*의 대표값만 사용한 경우, median을 사용하면 $d=0.30$일 때 $R^2$ Score가 0.981로 제일 큼
+
+  ![reg2](./imgs/regrslt2.png)
+
+  *<b>도표.24</b> best_epoch의 median의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> $R^2$ Score, <b>b.</b> RMSE*
+  
+  - $d=0.30$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.985, RMSE = 7.609
+
+- 위와 동일한 조건에서, 각 *init_lr*에 대해, *best_epoch*의 mean 값만을 사용하면 $d=-0.10$일 때 $R^2$ Score가 0.966로 제일 큼
+
+  ![reg3](./imgs/regrslt3.png)
+
+  *<b>도표.25</b> best_epoch의 mean의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> $R^2$ Score, <b>b.</b> RMSE*
+  
+  - $d=-0.10$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.976, RMSE = 9.275
+
+- 동일한 범위에서 임의로 6개의 값을 골라 같은 조건에서 선형회귀를 하였을 때, 두 $R^2$ Score 모두 0.96 초과, RMSE 10 미만이 나올 확률은 약 0.01이다.
+  <details>
+
+    <summary> 시뮬레이션을 통한 확률 계산 </summary>
+  
+  몬테카를로
+
+  ### 시뮬레이션 1
+
+  - (min,max)에 포함된 임의의 6개의 서로 다른 수 y에 대해서, y^d = a X + b로 선형회귀하는 시뮬레이션 진행
+  - d가 정수가 아닌 유리수인 경우, aX+b < 0 이 되면 y가 실수로 정의되지 않을 수 있음. 이 경우, 모델은 y=0으로 추정
+
+    도표. max R2 score, min RMSE의 분포
+
+    도표. d* = argmax R2 score에 대해, R2 Score, RMSE의 분포
+
+    도표. d** = argmax R2 score에 대해, R2 Score, RMSE의 분포
+  
+  - 만족할 확률 :
+  
+  ### 시뮬레이션 2
+
+  - 임의의 d에 대해, 같은 정의역에서 치역이 (min^d,max^d)인 y = (a X + b)^(1/d) 를 만족하는 임의?의 함수에 대하여(확률적으로 맞는지 확인) 시뮬레이션 진행
+  - 위와 동일한 조건
+
+    도표. max R2 score, min RMSE의 분포
+
+    도표. d* = argmax R2 score에 대해, R2 Score, RMSE의 분포
+
+    도표. d** = argmax R2 score에 대해, R2 Score, RMSE의 분포
+  
+  - 만족할 확률 : 
+
+  ### 결과 해석
+
+  - 베이지안? 조건부 확률? 
+
+  ### 결론
+
+  - 
+
+  </details>
+
+  -  
+<!--
+- *step_num* = *dataset_size* $\cdot$ *epoch* 
+-->
+
+- valid : 하나 더 뺐다면? 
+- test : 1.76e-4의 median, mean에 대해 비교
+
+*<b>도표.</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
+(d= 3개)
+
+- d에 따라 후보 함수 값 자체가 큰 차이가 나지 않는다
+
+### 모델 성능
+
+#### Best Model
+
+- 선정 기준 :
+  - best epoch일 때 valid loss의 값들을 평균을 취했을 때, 가장 잘 나온 *init_lr*를 고름
+  - *init_lr*= 4.46e-4일 때, test loss가 가장 작을 때를 best model로 정함
+
+    | **Best Model**|       Train |       Valid |        Test |
+    |:------|------------:|------------:|------------:|
+    |RMSE    | 5656.03     | 7308.7      | 8337.54     |
+    |MAPE    |    0.30884  |    0.357172 |    0.359422 |
+    |R2_SCORE|    0.735617 |    0.499996 |    0.4744   |
+
+    *<b>도표.</b> batch_size = 20480 일 때 best model의 성능*
+
+![8196loss](./imgs/batch8196_loss.png)
+
+*<b>도표.</b> batch_size = 20,480 일 때 best model의 학습에 따른 train loss와 valid loss (RMSE)*
+
+![8196scatter](./imgs/batch8196_tst_scatter.png)
+*<b>도표.</b> batch_size = 20,480 일 때 best model의 참 값과 예측 값 사이 산포도*
+
+![8196hist](./imgs/batch8196_tst_hist.png)
+*<b>도표.</b> batch_size = 20,480 일 때 best model의 정가 60,000원 이하 데이터에 대해 참 값에 따른 예측값의 histogram*
+
+![8196err](./imgs/batch8196_tst_err.png)
+*<b>도표.</b> batch_size = 20,480 일 때 best model의 정가 60,000원 이하 데이터에 대해 참 값에 따른 절대 오차의 histogram*
+
+![8196err_prcnt](./imgs/batch8196_tst_err_prcnt.png)
+*<b>도표.</b> batch_size = 20,480 일 때 best model의 정가 60,000원 이하 데이터에 대해 참 값에 따른 상대 오차의 histogram*
+
+<!--colorbar 추가, x축, y축 이름-->
+
+#### 대조군 모델
 
 - 동일한 방식으로 전처리한 데이터를 이용하여 회귀 예측 모델 설계
 - **Random Forest Regressor** (이하 RFR) : 기본 hyperparameter로 진행
   - 성능
 
-    | **test1**|       Train |       Valid |        Test |
+    | **RFR**|       Train |       Valid |        Test |
     |:---------|------------:|------------:|------------:|
     | RMSE     | 3175.18     | 8179.46     | 9079.71     |
     | MAPE     |    0.106272 |    0.298254 |    0.301357 |
@@ -256,6 +481,7 @@
   
     *<b>도표.</b> 전체 데이터에 대한 RFR model 성능*
 
+<!--
     | **test2**|       Train |       Valid |        Test |
     |:---------|------------:|------------:|------------:|
     | RMSE     | 2215.93     | 6188.06     | 6078.94     |
@@ -263,9 +489,10 @@
     | R2_SCORE |    0.926039 |    0.418558 |    0.444744 |
 
     *<b>도표.</b> 정가 60,000 이하 데이터에 대한 RFR model 성능*
+-->
 
 - **XGBoost Regressor** (이하 XGB)
-  - 독립변수가 동일한 알라딘 중고도서 가격 예측[[1]][(OLPJ24)]의 Expt.4에서 가장 성능이 좋았던 hyperparameter로 진행
+  - 독립변수가 동일한 알라딘 중고도서 가격 예측[[1]][(OLPJ24)]의 결과를 참조하여 hyperparameter 결정 <!-- Expt.4에서 가장 성능이 좋았던 hyperparameter로 진행-->
 
     |*num_boost_round*|  *learning_rate*|  *max_depth*|
     |-:|-:|-:|
@@ -278,7 +505,7 @@
     *<b>도표.</b> XGBoost 관련 hyperparameter*
   - 성능
 
-    | **test1**|       Train |       Valid |        Test |
+    | **XGB**|       Train |       Valid |        Test |
     |:---------|------------:|------------:|------------:|
     | RMSE     | 8083.08     | 8429.75     | 9544.35     |
     | MAPE     |    0.351907 |    0.36065  |    0.366424 |
@@ -286,6 +513,7 @@
 
     *<b>도표.</b> 전체 데이터에 대한 XGBoost model 성능*
 
+<!--
   | **test2**|       Train |       Valid |        Test |
   |:---------|------------:|------------:|------------:|
   | RMSE     | 5947.53     | 6333.92     | 6321.06     |
@@ -293,6 +521,7 @@
   | R2_SCORE |    0.467198 |    0.390825 |    0.399632 |
 
     *<b>도표.</b> 정가 60,000 이하 데이터에 대한 XGBoost model 성능*
+-->
 
 - **MLP Regressor**
   - 5개 층으로 구성하여 학습 진행, 활성화 함수는 ReLU
@@ -319,25 +548,36 @@
     *<b>도표.</b> MLP model 학습 hyperparameter*
   - 학습 결과
   
-  |**test1**|Train|Valid|Test|
-  |-|-:|-:|-:|
-  |RMSE|8638.70|8893.68|10034.56|
-  |MAPE|0.37203|0.38830|0.39802|
-  |R2 SCORE|0.38263|0.26371|0.23795|
-  
-  *<b>도표.</b> 전체 데이터에 대한 MLP model 성능* 
+    |**MLP**|Train|Valid|Test|
+    |-|-:|-:|-:|
+    |RMSE|8638.70|8893.68|10034.56|
+    |MAPE|0.37203|0.38830|0.39802|
+    |R2 SCORE|0.38263|0.26371|0.23795|
+
+    *<b>도표.</b> 전체 데이터에 대한 MLP model 성능* 
 
 ## 7. 결과 분석
 
 |        |Encoder-only Transformer|        RFR |        XGB  |        MLP  |
 |--------|-----------------------:|-----------:|------------:|------------:|
-|RMSE    || 9079.71    | 9544.35     | 10034.56    |
-|MAPE    ||    0.30136 |    0.36642  |    0.39802  |
-|R2 SCORE||    0.37666 |    0.31123  |    0.23795  |
+|RMSE    | 8337.54     | 9079.71    | 9544.35     | 10034.56    |
+|MAPE    |    0.359422 |    0.30136 |    0.36642  |    0.39802  |
+|R2 SCORE|    0.4744   |    0.37666 |    0.31123  |    0.23795  |
 
 *<b>도표.</b> 각 실험 별 best model과 성능*
 
-- 안녕
+- MAPE는 RFR이 제일 좋으나, R2 Score 즉 책 정보의 변화가 가격 예측의 차이에 가장 잘 반영된 것은 Transformer based model
+- 이에 RMSE도 가장 작게 나왔음
+- batch size 20480 기준, encoder only transformer 550epoch a100으로 약 1시간 걸림. init_lr = 4.46e-4 기준, best epoch의 median이 243, q3가 283.5인 것을 감안하면, 300 epoch로도 충분할 것으로 예상 (약 36분)
+
+
+*<b>도표.</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
+
+- 4.46e-4~5.54e-4? 중 어느 것을 정해도 될 듯. 성적에 큰 변화 없이 안정적. epoch 로 고려하면 될 듯
+- d의 범위를 더 좁히는 것은 어려웠으나 -1<d<1 가량으로. 더 좁히기 위해서는 두 가지 방법 가능
+  - batch_size에 따른 변화 추적
+  - init_lr의 scale을 넓혀야
+- 다만 d의 차이로 epoch 추정치 차이나는 것보다 std의 영향이 더 클 것으로 예상. 별 의미 없을 듯
 
 ## 8. 결론 및 한계
 
@@ -351,6 +591,7 @@
 - 도서 정가가 보통 1000원 단위로 결정되고, 100원 단위 미만으로는 대부분 값이 비어있는 특징을 encoder based model 학습에는 반영하지 못했음
   - parameter 양자화를 하면, 학습 및 추론 속도도 향상될 수 있음
 - 정가 예측에 큰 도움을 줄 수 있는 추가적인 정보(제본 형태, 쪽수 등)를 데이터셋에 추가하지 않고 학습 진행
+  - 현 실험에서 hyperparmeter 조정하는 것보다 해당 데이터 추가하는 것이 성적 향상에 더 큰 영향을 줄 것으로 예상
 - Attention을 이용한 다양한 모델, 특히 attention layer로만 구성된 모델을 이용한 학습을 시도해보지 못함
 - 행렬 계산을 이용한 Transformer 모델이 연산속도 측면에서 갖는 장점을 충분히 활용했는지 평가 필요
   - *d_model*의 값이 커도 모델의 step 당 연산 속도에 큰 영향을 주지 않는 것이 연산 속도 측면에서 큰 장점
