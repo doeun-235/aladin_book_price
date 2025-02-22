@@ -345,7 +345,7 @@ f(best epoch) vs init_lr
     ![eq](./imgs/equation.png)
 
     *<b>수식. 1</b> Transformer 모델 제안 때 사용된 step_num에 따른 learnig rate 값*
-- $X=\text{init\_lr}$과 $y = \text{best\_epoch}^d$ 사이에 선형회귀 분석
+- $X=$ *init_lr*과 $y=$ *best_epoch<sup>d</sup>* 사이에 선형회귀 분석
   - $-3\leq d \leq 3 \text{ and } d \neq 0$ 조건을 만족하는 $d$에 대해 시뮬레이션. $0.01$ 간격으로 $d$ 값을 설정
   - 도표.11의 7개의 *init_lr* 중 $1.76$e-4를 제외한 6개의 *init_lr*에 대해서 추정
     - *init_lr*$=1.76$e-4의 경우 총 *epoch*가 550으로 제한된 영향을 받았기 때문
@@ -353,7 +353,7 @@ f(best epoch) vs init_lr
 
     ![reg1](./imgs/regrslt1.png)
   
-    *<b>도표.23</b> 차수 $d$에 따른 선형회귀 모델의 결과 지표. <b>a.</b> $R^2$ Score, <b>b.</b> RMSE*
+    *<b>도표.23</b> 차수 $d$에 따른 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
 
   - $d=0.52$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.537, RMSE = 54.305
   - $d=0.03$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.539, RMSE = 54.202으로 성적이 제일 좋음
@@ -365,7 +365,7 @@ f(best epoch) vs init_lr
 
   ![reg2](./imgs/regrslt2.png)
 
-  *<b>도표.24</b> best_epoch의 median의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> $R^2$ Score, <b>b.</b> RMSE*
+  *<b>도표.24</b> best_epoch의 median의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
   
   - $d=0.30$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.985, RMSE = 7.609
 
@@ -373,7 +373,7 @@ f(best epoch) vs init_lr
 
   ![reg3](./imgs/regrslt3.png)
 
-  *<b>도표.25</b> best_epoch의 mean의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> $R^2$ Score, <b>b.</b> RMSE*
+  *<b>도표.25</b> best_epoch의 mean의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
   
   - $d=-0.10$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.976, RMSE = 9.275
 
@@ -457,7 +457,7 @@ f(best epoch) vs init_lr
 
 ![best_err](./imgs/best2_per_err.png)
 
-*<b>도표.</b> best model의 test 데이터 예측값에 대한 상대 오차의 도수분포표. (a) 절대도수 (b) 상대도수*
+*<b>도표.</b> best model의 test 데이터 예측값에 대한 상대 오차의 도수분포표. <b>a.</b> 절대도수 <b>b.</b> 상대도수*
 
 ![best_err](./imgs/best2_err_vs_per_err.png)
 
@@ -490,7 +490,7 @@ f(best epoch) vs init_lr
 -->
 
 - **XGBoost Regressor** (이하 XGB)
-  - 독립변수가 동일한 알라딘 중고도서 가격 예측[[1]][(OLPJ24)]의 결과를 참조하여 hyperparameter 결정 <!-- Expt.4에서 가장 성능이 좋았던 hyperparameter로 진행-->
+  - 독립변수가 동일한 알라딘 중고도서 가격 예측[<sub>[1]</sub>][(OLPJ24)]의 결과를 참조하여 hyperparameter 결정 <!-- Expt.4에서 가장 성능이 좋았던 hyperparameter로 진행-->
 
     |*num_boost_round*|  *learning_rate*|  *max_depth*|
     |-:|-:|-:|
@@ -571,7 +571,7 @@ f(best epoch) vs init_lr
 *<b>도표.</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
 
 - 4.46e-4~5.54e-4? 중 어느 것을 정해도 될 듯. 성적에 큰 변화 없이 안정적. epoch 로 고려하면 될 듯
-- $-1<d<1, d\neq0$에 대해 $\text{init\_lr}$과 $\text{best\_epoch}^d$ 사이 선형관계를 가짐. 다만, 각각의 init_lr에 대한 epoch의 표준편차가 크기 때문에 d를 더 좁히는 것은 현 데이터로는 과하다 판단.
+- $-1<d<1, d\neq0$에 대해 *init_lr*과 *best_epoch<sup>d</sup>* 사이 선형관계를 가짐. 다만, 각각의 init_lr에 대한 epoch의 표준편차가 크기 때문에 d를 더 좁히는 것은 현 데이터로는 과하다 판단.
 - 다음 
   - batch_size에 따른 변화 추적
   - init_lr의 scale을 넓히면 d에 따른 epoch 추정치의 변화가 
