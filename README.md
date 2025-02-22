@@ -377,55 +377,35 @@ f(best epoch) vs init_lr
   
   - $d=-0.10$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.976, RMSE = 9.275
 
-- 동일한 범위에서 임의로 6개의 값을 골라 같은 조건에서 선형회귀를 하였을 때, 두 $R^2$ Score 모두 0.96 초과, RMSE 10 미만이 나올 확률은 약 0.01이다.
-  <details>
-
-    <summary> 시뮬레이션을 통한 확률 계산 </summary>
+- 동일한 범위에서 임의로 6개의 값을 골라 같은 조건에서 선형회귀를 하였을 때, 두 $R^2$ Score 모두 0.96 초과, RMSE 10 미만이 나올 확률은 시뮬레이션 결과 약 0.054로 흔치는 않은 확률
+  - \[149, 550\]에 포함된 임의의 6개의 서로 다른 수 $\text{y}_i$에 대해서, $\text{y}_i^d$ = $aX_i + b, d\in [-3, 3] \subset \mathbb{Q}$로 선형회귀하는 시뮬레이션 진행
+    - $550\geq \text{y}_0 > \cdots > \text{y}_5 \geq149, \quad X_0=2.84e-4<\cdots<X_5=5.54e-4$
+  - 총 경우의 수가 $5.65e+12$개인 분포에 대해 1,000번 독립 시행
+  - $d$가 정수가 아닌 유리수인 경우, $aX+b < 0$ 이 되면 $\text{y}$가 실수로 정의되지 않을 수 있음. 이 경우, 모델은 $\text{y}=0$으로 추정. 이 경우 성적이 좋게 나오기 힘듦.
+  - 단조 감소면서 변곡점이 없어야 하고 모든 $\text{y}_i^d$ 값이 양수로 예측되어야 높은 R2 Score를 얻을 수 있음
   
-  몬테카를로
+  ![simu1](./imgs/simu_pdf.png)
 
-  ### 시뮬레이션 1
+  *<b>도표.26</b> 시뮬레이션에 따른 max R2 score, min RMSE의 통계적 확률 분포*
 
-  - (min,max)에 포함된 임의의 6개의 서로 다른 수 y에 대해서, y^d = a X + b로 선형회귀하는 시뮬레이션 진행
-  - d가 정수가 아닌 유리수인 경우, aX+b < 0 이 되면 y가 실수로 정의되지 않을 수 있음. 이 경우, 모델은 y=0으로 추정
+  ![simu2](./imgs/simu_cdf.png)
 
-    도표. max R2 score, min RMSE의 분포
+  *<b>도표.27</b> 시뮬레이션에 따른 max R2 score, min RMSE의 누적 확률 분포*
 
-    도표. d* = argmax R2 score에 대해, R2 Score, RMSE의 분포
+  - notation
+    - $\widehat{\text{y}_{(i,d)}}$ : $\text{y}_i$에 대한 $d$차 추정값. 즉, $(a_{(i,d)}X_i+b_{(i,d)})^{1/d}$ or $0$
+    - $\tilde{d}$ : $\argmax_{d}\left(\min\left(R^2\text{ Score}(\text{y}_i,\widehat{\text{y}_{(i,d)}}),R^2\text{ Score}(\text{y}_i^{d},a_{(i,d)}X_i+b_{(i,d)})\right)\right)$
+    - $d^*$ : $\argmin_d$RMSE$(\text{y}_i,\widehat{\text{y}_{(i,d)}})$
 
-    도표. d** = argmax R2 score에 대해, R2 Score, RMSE의 분포
-  
-  - 만족할 확률 :
-  
-  ### 시뮬레이션 2
+  ![simu3](./imgs/simu_fdt.png)
 
-  - 임의의 d에 대해, 같은 정의역에서 치역이 (min^d,max^d)인 y = (a X + b)^(1/d) 를 만족하는 임의?의 함수에 대하여(확률적으로 맞는지 확인) 시뮬레이션 진행
-  - 위와 동일한 조건
+  *<b>도표.28</b> d = d tilde 일 때 R2 score, RMSE에 따른 도수 분포표. 예를 들어, 우상단의 49는 RMSE 0이상 10미만, R2 score 0.98초과 1.00이하에 대한 도수*
 
-    도표. max R2 score, min RMSE의 분포
-
-    도표. d* = argmax R2 score에 대해, R2 Score, RMSE의 분포
-
-    도표. d** = argmax R2 score에 대해, R2 Score, RMSE의 분포
-  
-  - 만족할 확률 : 
-
-  ### 결과 해석
-
-  - 베이지안? 조건부 확률? 
-
-  ### 결론
-
-  - 
-
-  </details>
-
-  -  
+  - 즉, $0\leq \text{RMSE}(\text{y}_i,\widehat{\text{y}_{(i,\tilde{d})}})<10$, $0.96 < R^2\text{ Score}(\text{y}_i,\widehat{\text{y}_{(i,\tilde{d})}}),R^2\text{ Score}(\text{y}_i^{\tilde{d}},a_{(i,{\tilde{d}})}X_i+b_{(i,\tilde{d})}) \leq 1.0 $에 대한 통계적 확률은 0.054
 <!--
 - *step_num* = *dataset_size* $\cdot$ *epoch* 
 -->
 
-- valid : 하나 더 뺐다면? 
 - test : 1.76e-4의 median, mean에 대해 비교
 
 *<b>도표.</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
@@ -449,21 +429,39 @@ f(best epoch) vs init_lr
 
     *<b>도표.</b> batch_size = 20480 일 때 best model의 성능*
 
-![8196loss](./imgs/batch8196_loss.png)
+![best_loss](./imgs/best0.png)
 
-*<b>도표.</b> batch_size = 20,480 일 때 best model의 학습에 따른 train loss와 valid loss (RMSE)*
+*<b>도표.</b> best model의 학습에 따른 train loss와 valid loss (RMSE), valid score (R2 Score)*
 
-![8196scatter](./imgs/batch8196_tst_scatter.png)
-*<b>도표.</b> batch_size = 20,480 일 때 best model의 참 값과 예측 값 사이 산포도*
+![best_scatter](./imgs/best_scatter.png)
 
-![8196hist](./imgs/batch8196_tst_hist.png)
-*<b>도표.</b> batch_size = 20,480 일 때 best model의 정가 60,000원 이하 데이터에 대해 참 값에 따른 예측값의 histogram*
+*<b>도표.</b> best model의 test 데이터에 대해 참 값에 따른 예측값의 산포도*
 
-![8196err](./imgs/batch8196_tst_err.png)
-*<b>도표.</b> batch_size = 20,480 일 때 best model의 정가 60,000원 이하 데이터에 대해 참 값에 따른 절대 오차의 histogram*
+<!--
+![best_trn](./imgs/best1_trn.png)
 
-![8196err_prcnt](./imgs/batch8196_tst_err_prcnt.png)
-*<b>도표.</b> batch_size = 20,480 일 때 best model의 정가 60,000원 이하 데이터에 대해 참 값에 따른 상대 오차의 histogram*
+*<b>도표.</b> best model의 정가 60,000원 이하 train 데이터에 대해 참 값에 따른 예측값의 histogram*
+
+![best_vld](./imgs/best1_vld.png)
+
+*<b>도표.</b> best model의 정가 60,000원 이하 valid 데이터에 대해 참 값에 따른 예측값의 histogram*
+-->
+
+![best_tst](./imgs/best1_tst.png)
+
+*<b>도표.</b> best model의 정가 60,000원 이하 test 데이터에 대해 참 값에 따른 예측값의 histogram*
+
+![best_err](./imgs/best2_err.png)
+
+*<b>도표.</b> best model의 test 데이터 예측값에 대한 절대 오차의 도수분포표*
+
+![best_err](./imgs/best2_per_err.png)
+
+*<b>도표.</b> best model의 test 데이터 예측값에 대한 상대 오차의 도수분포표. (a) 절대도수 (b) 상대도수*
+
+![best_err](./imgs/best2_err_vs_per_err.png)
+
+*<b>도표.</b> best model의 test 데이터 예측값에 대한 절대 오차와 상대 오차의 도수분포표*
 
 <!--colorbar 추가, x축, y축 이름-->
 
@@ -566,24 +564,29 @@ f(best epoch) vs init_lr
 
 *<b>도표.</b> 각 실험 별 best model과 성능*
 
-- MAPE는 RFR이 제일 좋으나, R2 Score 즉 책 정보의 변화가 가격 예측의 차이에 가장 잘 반영된 것은 Transformer based model
-- 이에 RMSE도 가장 작게 나왔음
-- batch size 20480 기준, encoder only transformer 550epoch a100으로 약 1시간 걸림. init_lr = 4.46e-4 기준, best epoch의 median이 243, q3가 283.5인 것을 감안하면, 300 epoch로도 충분할 것으로 예상 (약 36분)
-
+- MAPE는 RFR이 제일 좋으나, R2 Score가 가장 높은 것, 즉 책 정보의 변화가 가격 예측의 차이에 가장 잘 반영된 것은 Encoder based model
+- 이에 Encoder based model일 때 RMSE도 가장 작게 나왔음
+- batch size 20480 기준, A100으로 Encoder based model 학습시 550epoch에 약 1시간 걸림. init_lr = 4.46e-4 기준, best epoch의 median이 243, q3가 283.5인 것을 감안하면, 300 epoch로도 충분할 것으로 예상 (약 36분)
 
 *<b>도표.</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
 
 - 4.46e-4~5.54e-4? 중 어느 것을 정해도 될 듯. 성적에 큰 변화 없이 안정적. epoch 로 고려하면 될 듯
-- d의 범위를 더 좁히는 것은 어려웠으나 -1<d<1 가량으로. 더 좁히기 위해서는 두 가지 방법 가능
+- $-1<d<1, d\neq0$에 대해 $\text{init\_lr}$과 $\text{best\_epoch}^d$ 사이 선형관계를 가짐. 다만, 각각의 init_lr에 대한 epoch의 표준편차가 크기 때문에 d를 더 좁히는 것은 현 데이터로는 과하다 판단.
+- 다음 
   - batch_size에 따른 변화 추적
-  - init_lr의 scale을 넓혀야
-- 다만 d의 차이로 epoch 추정치 차이나는 것보다 std의 영향이 더 클 것으로 예상. 별 의미 없을 듯
+  - init_lr의 scale을 넓히면 d에 따른 epoch 추정치의 변화가 
 
 ## 8. 결론 및 한계
 
 ### 결론
 
-- 간단한 Machine-learning 모델과 multilayer perceptron으로는 충분한 성능이 나오지 않음
+- 간단한 Machine-learning 모델과 multilayer perceptron보다 Encoder based model이 RMSE 및 R2 Score 측면에서 더 좋은 성능이 나옴
+  - 또한 Valid 및 Test Score의 차이가 더 적은 것으로 보아, 자연어 처리 결과를 더욱 잘 반영하고 있다 판단 가능
+- *init_lr*과 *best_epoch*$^d$ 사이에 단조 감소 및 선형 관계성을 있다 볼 수 있지만, 각 *init_lr*별 *best_epoch*의 표준편차가 커서 차수 d를 정하기 위해서는 추가적인 실험 필요
+  - 상관계수가 0.7?으로 좋은 값이 나오지는 않음
+  - *best_epoch*의 중앙값 혹은 평균의 d제곱의 경우 $-0.75\leq d\leq0.75, d\neq 0$의 차수 d에 대해 R2 Score가 0.96 초과, RMSE 10 미만인 모델로 회귀분석이 가능
+  - 임의로 149이상 550이하 숫자를 6개 뽑아 감소하는 순서로 나열할 경우, 위와 같은 성적이 나올 수 있는 숫자가 뽑힐 확률은 0.054가량
+  - *init_lr*의 개수가 6개로 적기 때문에 $d<-0.75$ or $0.75<d$를 기각하기는 힘듦. 다만, 추가적인 실험을 했을 때 의미있는 결과가 나올 수 있다 추정 가능
 
 ### 한계 평가
 
@@ -604,6 +607,7 @@ f(best epoch) vs init_lr
 
 - 출간 연도 등으로 stratify하여 학습할 때 성능을 높히는 것이 가능한지 확인
 - *d_model*, *d_ff*, *head*, *N* 등의 모델 구조 관련 hyperparameter를 변경했을 때 성능이 어떻게 달라지는지 확인
+- *d_model*, *batch_size* 등이 *best_epoch*에 끼치는 영향을 확인
 - Attention layer만을 이용한 모델 개발 및 성능 비교
   - 단어 corpus를 다른 열의 내용에 대하여도 확장하거나, 다른 embedding model로 vector화 된 정보들이 섞여있을 경우 학습에 주의 할 점 조사
 - 데이터를 보강하여 학습에 수월한 질 좋은 데이터셋 구성
