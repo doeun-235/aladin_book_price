@@ -130,10 +130,10 @@
 
 ### 모델 설계
 
-#### Encoder Model
+#### Encoder Based Model
 
 - **INPUT** : (*batch_size*, 64) $\rightarrow$ **OUTPUT** : (*batch_size*, 1)
-- self attention layer 기반의 encoder(이하 attention based encoder)에 multilayer perceptron (이하 MLP) layer들을 연장한 모델
+- self attention layer 기반의 encoder(이하 attention based encoder)에 multilayer perceptron (이하 MLP) layer들을 연장한 모델(이하 encoder based model)
   - self attention layer는 행렬곱 및 내적의 연장이기 때문에, 병렬계산이 가능하고 parameter 수가 같다면 MLP에 비해 연산이 빠름
   - attention layer를 적극적으로 이용한 Transformer[[2]][(VSPU17)]는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
   - 이번 과제도 단어가 나열됐을 때 형성되는 맥락과 관련되어 있다 이해할 수 있기 때문에, encoder-only Transformer 모델이 효과적일 수 있을 것이라 예상
@@ -215,7 +215,7 @@
 ### 시뮬레이션 설정
 
 - 모델 성능은 RMSE, MAPE, $R^2$ Score 등을 활용하여 평가
-- attention based encoder 모델 및 학습에서의 hyperparameter를 변경하며 학습 성능 평가
+- encoder based model 학습에서의 hyperparameter를 변경하며 학습 성능 평가
 - **batch size** : 20480
 - **optimizer** : Adam
   |adam_eps|weight_decay|
@@ -223,6 +223,7 @@
   |5e-7|5e-20|
 
   *<b>도표.10</b> optimizer 관련 hyperparameter*
+
 - **learning rate**
   - 초기값을 1.5e-4 에서 5.6e-4 사이 7개의 값 중 하나로 설정해서 진행
   - *initial learning rate* 값에 따라 20번 내외 혹은 40번 내외 시뮬레이션 시행
@@ -268,19 +269,12 @@
 - **loss funcion** : RMSE
 - 모델 성능의 평가를 위해 XGBoost, Random Forest Regressor 모델, 간단한 MLP모델과 성능 비교
 
-<!--
-### 평가 기준
-
-- metric : RMSE, MAPE, $R^2$ score
-- metric 별 성능에 가중치를 적용한 뒤 조화 평균으로 순위를 메김
-  - 산술, 기하 평균에 비해 조화 평균은 값들 간의 차이가 크지 않은 것을 상대적으로 높게 평가
-  - 세 metric에 대하여 고루 잘 예측하는 모델을 목표로 하기 때문에 조화 평균을 사용
--->
 ### 시뮬레이션 결과
 
 #### *init_lr* 별 실험 결과
 
   ![box0](./imgs/box0.png)
+
   *<b>도표.14</b> 각 init_lr 별 best_epoch 및 성적의 분포*
 
   |          |   count |    mean |     std |   min |     q1 |   median |    q3 |   max |
@@ -324,18 +318,6 @@
   - *init_lr* 별로 확인을 하였을 때, RMSE 및 $R^2$ Score가 상위권인 시행들의 *best_epoch*가 *best_epoch*의 median 및 mean 값 부근에 있는 것을 확인할 수 있음
   - *best_epoch*가 나중에 등장했을 수록 *valid_loss*와 *train_loss*의 차가 증가하는 것으로 보아, *best_epoch*가 클수록 과적합 됐을 가능성이 높다고 추정 가능
 
-<!--
-각 init lr 별 median, mean 체크
-
-- 선형 확인 (오버샘플링)
-f(best epoch) vs init_lr
-(median, mean)
-
-- init lr vs vld loss, score, mape
-
-- init lr vs best epoch
--->
-
 #### *init_lr*과 *best_epoch* 사이 관계
 
 - 위 실험에서는 *patience* 만큼 *score*의 개선이 없으면 *factor* 배 *learning rate*를 감소시키는 scheduling을 사용
@@ -345,27 +327,27 @@ f(best epoch) vs init_lr
     ![eq](./imgs/equation.png)
 
     *<b>수식. 1</b> Transformer 모델 제안 때 사용된 step_num에 따른 learnig rate 값*
-- $X=\text{init\_lr}$과 $y = \text{best\_epoch}^d$ 사이에 선형회귀 분석
+- $X=$ *init_lr*과 $y=$ *best_epoch<sup>d</sup>* 사이에 선형회귀 분석
   - $-3\leq d \leq 3 \text{ and } d \neq 0$ 조건을 만족하는 $d$에 대해 시뮬레이션. $0.01$ 간격으로 $d$ 값을 설정
-  - 도표.11의 7개의 *init_lr* 중 $1.76$e-4를 제외한 6개의 *init_lr*에 대해서 추정
-    - *init_lr*$=1.76$e-4의 경우 총 *epoch*가 550으로 제한된 영향을 받았기 때문
+  - 도표.11의 7개의 *init_lr* 중 1.76e-4를 제외한 6개의 *init_lr*에 대해서 추정
+    - *init_lr*=1.76e-4의 경우 총 *epoch*가 550으로 제한된 영향을 받았기 때문
 - 위 조건을 만족하는 $d$에 대해 *init_lr*으로 *best_epoch*<sup>$d$</sup>를 선형회귀 했을 때, $d=0.52$일 때 $R^2$ Score가 0.536로 제일 큼
 
     ![reg1](./imgs/regrslt1.png)
   
-    *<b>도표.23</b> 차수 $d$에 따른 선형회귀 모델의 결과 지표. <b>a.</b> $R^2$ Score, <b>b.</b> RMSE*
+    *<b>도표.23</b> 차수 d에 따른 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
 
   - $d=0.52$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.537, RMSE = 54.305
   - $d=0.03$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.539, RMSE = 54.202으로 성적이 제일 좋음
   - 6개의 *init_lr*에 대하여 각각 38~48개의 *best_epoch* 값이 있기 때문에 $R^2$ Score는 좋은 결과를 얻기 힘듦
-  - RMSE값은 *best_epoch*의 *init_lr* 별 표준편차의 weighted mean과 비슷한 값으로 구해짐 
+  - RMSE값은 *best_epoch*의 *init_lr* 별 표준편차의 weighted mean과 비슷한 값으로 구해짐
     - 도표.15에서 *best_epoch* 값의 *init_lr* 별 표준편차를 weighted mean을 구하면, $56.137$이 나오고, oversampling한 것을 반영하면 $52.595$가 나옴
 
 - 위와 동일한 조건에서, 각 *init_lr*에 대해, *best_epoch*의 대표값만 사용한 경우, median을 사용하면 $d=0.30$일 때 $R^2$ Score가 0.981로 제일 큼
 
   ![reg2](./imgs/regrslt2.png)
 
-  *<b>도표.24</b> best_epoch의 median의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> $R^2$ Score, <b>b.</b> RMSE*
+  *<b>도표.24</b> best_epoch의 median의 d 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
   
   - $d=0.30$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.985, RMSE = 7.609
 
@@ -373,7 +355,7 @@ f(best epoch) vs init_lr
 
   ![reg3](./imgs/regrslt3.png)
 
-  *<b>도표.25</b> best_epoch의 mean의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> $R^2$ Score, <b>b.</b> RMSE*
+  *<b>도표.25</b> best_epoch의 mean의 d 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
   
   - $d=-0.10$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.976, RMSE = 9.275
 
@@ -393,7 +375,7 @@ f(best epoch) vs init_lr
   *<b>도표.27</b> 시뮬레이션에 따른 max R2 score, min RMSE의 누적 확률 분포*
 
   - notation
-    - $\widehat{\text{y}_{(i,d)}}$ : $\text{y}_i$에 대한 $d$차 추정값. 즉, $(a_{(i,d)}X_i+b_{(i,d)})^{1/d}$ or $0$
+    - $\widehat{\text{y}_{ (i,d) }}$ : $\text{y}_i$에 대한 $d$ 차 추정값. 즉, $(a_{ (i,d) }X_i+b_{(i,d)})^{1/d}$ or $0$
     - $\tilde{d}$ : $\argmax_{d}\left(\min\left(R^2\text{ Score}(\text{y}_i,\widehat{\text{y}_{(i,d)}}),R^2\text{ Score}(\text{y}_i^{d},a_{(i,d)}X_i+b_{(i,d)})\right)\right)$
     - $d^*$ : $\argmin_d$RMSE$(\text{y}_i,\widehat{\text{y}_{(i,d)}})$
 
@@ -406,12 +388,29 @@ f(best epoch) vs init_lr
 - *step_num* = *dataset_size* $\cdot$ *epoch* 
 -->
 
+  ![regrslt0](./imgs/reg_rslts_plot0.png)
+
+  *<b>도표.29</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
+
 - test : 1.76e-4의 median, mean에 대해 비교
 
-*<b>도표.</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
-(d= 3개)
+  ||median|mean|
+  |-|-:|-:|
+  |predict|473.17|491.01|
+  |actual|466|465.14|
+  |error|7.17|25.01|
 
-- d에 따라 후보 함수 값 자체가 큰 차이가 나지 않는다
+  *<b>도표.30</b> init_lr = 1.76e-4에서 median 및 mean 값 예측 및 차이*
+
+  - median, mean을 각각 d=0.3, -0.1일 때 회귀 모델로 예측함
+  - median의 오차에 비해 mean의 오차가 큼
+    - mean보다 median이 최대 epoch 수가 제한된 것의 영향을 덜 받기 때문으로 예상
+  - median을 예측할 때, 1.76e-4에서의 예측값이 d에 따라 편차가 있음
+    - validation 및 test set을 추가로 구성하면 적합한 d의 범위를 좁힐 때 도움을 받을 수 있을 것으로 예상
+
+  ![regrslt1](./imgs/reg_rslts_plot1.png)
+
+  *<b>도표.31</b> init_lr과 best epoch의 median 사이의 회귀모델*
 
 ### 모델 성능
 
@@ -427,15 +426,23 @@ f(best epoch) vs init_lr
     |MAPE    |    0.30884  |    0.357172 |    0.359422 |
     |R2_SCORE|    0.735617 |    0.499996 |    0.4744   |
 
-    *<b>도표.</b> batch_size = 20480 일 때 best model의 성능*
+    *<b>도표.32</b> batch_size = 20480 일 때 best model의 성능*
 
-![best_loss](./imgs/best0.png)
+- 학습 추이 및 결과:
 
-*<b>도표.</b> best model의 학습에 따른 train loss와 valid loss (RMSE), valid score (R2 Score)*
+  ![best_loss](./imgs/best0.png)
 
-![best_scatter](./imgs/best_scatter.png)
+  *<b>도표.33</b> best model의 학습에 따른 train loss와 valid loss (RMSE), valid score (R2 Score)*
+  
+  ![best_dist](./imgs/rslt_dist.png)
 
-*<b>도표.</b> best model의 test 데이터에 대해 참 값에 따른 예측값의 산포도*
+  *<b>도표.34</b> test set의 정가, best model의 절대오차 및 상대오차 histogram*
+
+  - 정가 60000원 미만의 데이터가 train, valid, test set 기준 각각 0.9941, 0.9948, 0.9938,의 비율을 차지
+
+  ![best_scatter](./imgs/best_scatter.png)
+
+  *<b>도표.35</b> best model의 test 데이터에 대해 참 값에 따른 예측값의 산포도*
 
 <!--
 ![best_trn](./imgs/best1_trn.png)
@@ -446,24 +453,55 @@ f(best epoch) vs init_lr
 
 *<b>도표.</b> best model의 정가 60,000원 이하 valid 데이터에 대해 참 값에 따른 예측값의 histogram*
 -->
+  ![best_tst](./imgs/best1_tst.png)
 
-![best_tst](./imgs/best1_tst.png)
+  *<b>도표.36</b> best model의 정가 60,000원 이하 test 데이터에 대해 참 값에 따른 예측값의 histogram*
 
-*<b>도표.</b> best model의 정가 60,000원 이하 test 데이터에 대해 참 값에 따른 예측값의 histogram*
+  ![best_err](./imgs/best2_err.png)
 
-![best_err](./imgs/best2_err.png)
+  *<b>도표.37</b> best model의 test 데이터 예측값에 대한 오차의 도수분포표*
 
-*<b>도표.</b> best model의 test 데이터 예측값에 대한 절대 오차의 도수분포표*
+  ![best_err](./imgs/best2_per_err.png)
 
-![best_err](./imgs/best2_per_err.png)
+  *<b>도표.38</b> best model의 test 데이터 예측값에 대한 상대 오차의 도수분포표. <b>a.</b> 절대도수 <b>b.</b> 상대도수*
 
-*<b>도표.</b> best model의 test 데이터 예측값에 대한 상대 오차의 도수분포표. (a) 절대도수 (b) 상대도수*
+  - 도표.38.b에서 회색 글씨로 상대도수가 표시된 부분은 0.01 미만인 부분
+    - 도표.38.b에서 상대도수가 0.01 이상인 부분들의 비율은 총 0.9009
 
-![best_err](./imgs/best2_err_vs_per_err.png)
+  ![best_err](./imgs/best2_err_vs_per_err.png)
 
-*<b>도표.</b> best model의 test 데이터 예측값에 대한 절대 오차와 상대 오차의 도수분포표*
+  *<b>도표.39</b> best model의 test 데이터 예측값에 대한 오차와 상대 오차의 도수분포표*
 
-<!--colorbar 추가, x축, y축 이름-->
+  - 도수분포표에서 각 계급은 가리키는 값 이상 그 다음 값 미만에 해당하는 데이터의 수 혹은 비율
+    - e.g. 도표.37에서, 정가 4000원 이상 6000원 미만 가격의 책 중 예측값-참값이 0이상 2000원 미만인 데이터의 수는 1794
+    - 다만 맨 끝의 계급은 구간 바깥의 값도 포함하고 있음
+      - e.g. 도표.38.a에서, 정가 0원 이상 2000원 미만 가격의 책 중 상대 오차의 값이 4.0 이상인 데이터의 수는 68
+      - e.g. 도표.39에서 -60000,-1.0에 해당하는 계급은 오차가 -58000 미만 상대오차가 -1.0 이하인 것으로, 해당 데이터의 수는 2
+  - best model의 test set 예측값에서 오차의 최소는 -530609.5 최대는 146356.1, 절대 오차의 최소는 0.0742. -20000 이상 20000 미만의 비율이 0.9829, -8337.54 이상 8337.54 미만의 비율이 0.8894, -6000 이상 6000 미만의 비율이 0.8013, -3000 이상 3000 미만의 비율은 0.5504. 절대 오차의 평균은 4163.47
+    - RMSE가 8337.54인 것을 감안하면, 절대오차가 8337.54 이상인 데이터의 수는 적지만, 절대오차가 매우 커서, RMSE 성능을 떨어뜨리는데 큰 영향을 주고 있음
+  - 상대 오차가 -0.3 이상 0.3 미만인 부분의 비율은 0.6356, -0.4 이상 0.4 미만인 부분의 비율은 0.7427
+    - MAPE가 0.359인 것을 감안하면, 상대 오차가 -0.4 미만 0.4 이상인 부분은 매우 넓게 분포해 있음을 추론 가능
+  
+  ![best_err](./imgs/err_vs1.png)
+
+  *<b>도표.40</b> best model의 test 데이터에서 각 정가 가격대 별 오차의 분포*
+
+  ![best_err](./imgs/err_vs2.png)
+
+  *<b>도표.41</b> best model의 test 데이터에서 각 정가 가격대 별 상대오차의 분포*
+  
+  - 도표.40, 도표.41은 각각 도표.37, 도표.38.a에서 행 별로 합을 구한 뒤 나누어, 각 행 내에서 오차 혹은 상대오차가 어떤 비율로 분포하고 있는지 보기 위해 표시한 것
+  - 20000원 미만의 도서에 대해서 상대적으로 오차와 상대오차가 작고, 그 이상으로 가면 정확도가 점차 떨어짐
+
+  ![best_err](./imgs/err_dist1.png)
+
+  *<b>도표.42</b> best model의 test 데이터에서 절대오차가 높은 데이터와 낮은 데이터에서 출판일시의 분포*
+  
+  ![best_err](./imgs/err_dist2.png)
+
+  *<b>도표.43</b> best model의 test 데이터에서 상대오차가 높은 데이터와 낮은 데이터에서 출판일시의 분포*
+  
+  - 2000년대에 출간된 도서의 경우 상대적으로 절대오차와 상대오차가 클 가능성이 높은 것으로 보임
 
 #### 대조군 모델
 
@@ -477,7 +515,7 @@ f(best epoch) vs init_lr
     | MAPE     |    0.106272 |    0.298254 |    0.301357 |
     | R2_SCORE |    0.916681 |    0.373757 |    0.376662 |
   
-    *<b>도표.</b> 전체 데이터에 대한 RFR model 성능*
+    *<b>도표.44</b> 전체 데이터에 대한 RFR model 성능*
 
 <!--
     | **test2**|       Train |       Valid |        Test |
@@ -490,7 +528,7 @@ f(best epoch) vs init_lr
 -->
 
 - **XGBoost Regressor** (이하 XGB)
-  - 독립변수가 동일한 알라딘 중고도서 가격 예측[[1]][(OLPJ24)]의 결과를 참조하여 hyperparameter 결정 <!-- Expt.4에서 가장 성능이 좋았던 hyperparameter로 진행-->
+  - 독립변수가 동일한 알라딘 중고도서 가격 예측[<sub>[1]</sub>][(OLPJ24)]의 결과를 참조하여 hyperparameter 결정 <!-- Expt.4에서 가장 성능이 좋았던 hyperparameter로 진행-->
 
     |*num_boost_round*|  *learning_rate*|  *max_depth*|
     |-:|-:|-:|
@@ -500,7 +538,8 @@ f(best epoch) vs init_lr
     |-:|-:|-:|
     |4|  1|  1|
   
-    *<b>도표.</b> XGBoost 관련 hyperparameter*
+    *<b>도표.45</b> XGBoost 관련 hyperparameter*
+
   - 성능
 
     | **XGB**|       Train |       Valid |        Test |
@@ -509,7 +548,7 @@ f(best epoch) vs init_lr
     | MAPE     |    0.351907 |    0.36065  |    0.366424 |
     | R2_SCORE |    0.460038 |    0.334845 |    0.311233 |
 
-    *<b>도표.</b> 전체 데이터에 대한 XGBoost model 성능*
+    *<b>도표.46</b> 전체 데이터에 대한 XGBoost model 성능*
 
 <!--
   | **test2**|       Train |       Valid |        Test |
@@ -533,7 +572,7 @@ f(best epoch) vs init_lr
     |32|8|batch norm과 dropout을 적용|
     |8|1|output 출력|
 
-    *<b>도표.</b> MLP model의 각 layer별 입력 및 출력 tensor의 차원*
+    *<b>도표.47</b> MLP model의 각 layer별 입력 및 출력 tensor의 차원*
   
     |init_lr|factor|adam_eps|patience|warmup|
     |-:|-:|-:|-:|-:|
@@ -543,7 +582,8 @@ f(best epoch) vs init_lr
     |-:|-:|-:|-:|
     |700|1.0|5e-9|0.1|
 
-    *<b>도표.</b> MLP model 학습 hyperparameter*
+    *<b>도표.48</b> MLP model 학습 hyperparameter*
+  
   - 학습 결과
   
     |**MLP**|Train|Valid|Test|
@@ -552,38 +592,31 @@ f(best epoch) vs init_lr
     |MAPE|0.37203|0.38830|0.39802|
     |R2 SCORE|0.38263|0.26371|0.23795|
 
-    *<b>도표.</b> 전체 데이터에 대한 MLP model 성능* 
+    *<b>도표.49</b> 전체 데이터에 대한 MLP model 성능* 
 
 ## 7. 결과 분석
 
-|        |Encoder-only Transformer|        RFR |        XGB  |        MLP  |
+|        |Encoder Based Model|        RFR |        XGB  |        MLP  |
 |--------|-----------------------:|-----------:|------------:|------------:|
 |RMSE    | 8337.54     | 9079.71    | 9544.35     | 10034.56    |
 |MAPE    |    0.359422 |    0.30136 |    0.36642  |    0.39802  |
 |R2 SCORE|    0.4744   |    0.37666 |    0.31123  |    0.23795  |
 
-*<b>도표.</b> 각 실험 별 best model과 성능*
+*<b>도표.50</b> 각 실험 별 best model과 성능*
 
-- MAPE는 RFR이 제일 좋으나, R2 Score가 가장 높은 것, 즉 책 정보의 변화가 가격 예측의 차이에 가장 잘 반영된 것은 Encoder based model
-- 이에 Encoder based model일 때 RMSE도 가장 작게 나왔음
-- batch size 20480 기준, A100으로 Encoder based model 학습시 550epoch에 약 1시간 걸림. init_lr = 4.46e-4 기준, best epoch의 median이 243, q3가 283.5인 것을 감안하면, 300 epoch로도 충분할 것으로 예상 (약 36분)
-
-*<b>도표.</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
-
-- 4.46e-4~5.54e-4? 중 어느 것을 정해도 될 듯. 성적에 큰 변화 없이 안정적. epoch 로 고려하면 될 듯
-- $-1<d<1, d\neq0$에 대해 $\text{init\_lr}$과 $\text{best\_epoch}^d$ 사이 선형관계를 가짐. 다만, 각각의 init_lr에 대한 epoch의 표준편차가 크기 때문에 d를 더 좁히는 것은 현 데이터로는 과하다 판단.
-- 다음 
-  - batch_size에 따른 변화 추적
-  - init_lr의 scale을 넓히면 d에 따른 epoch 추정치의 변화가 
+- MAPE는 RFR이 제일 좋으나, R2 Score가 가장 높은 것, 즉 책 정보의 변화가 가격 예측의 차이에 가장 잘 반영된 것은 encoder based model
+- 이에 encoder based model일 때 RMSE도 가장 작게 나왔음
+- batch size 20480 기준, A100으로 encoder based model 학습시 550epoch에 약 1시간 걸림. init_lr = 4.46e-4 기준, best epoch의 median이 243, q3가 283.5인 것을 감안하면, 300 epoch로도 충분할 것으로 예상 (약 36분)
+  - 4.46e-4~5.54e-4 중 정한다면 *init_lr*의 차이로 성능을 개선하고자 하는 것은 큰 의미가 없을 수 있음.
+- $-1<d<1, d\neq0$에 대해 *init_lr*과 *best_epoch<sup>d</sup>* 사이 선형관계를 가짐. 다만, 각각의 *init_lr*에 대한 *best_epoch*의 표준편차가 크기 때문에 d를 더 좁히는 것은 현 데이터로는 과하다 판단.
 
 ## 8. 결론 및 한계
 
 ### 결론
 
-- 간단한 Machine-learning 모델과 multilayer perceptron보다 Encoder based model이 RMSE 및 R2 Score 측면에서 더 좋은 성능이 나옴
+- 간단한 Machine-learning 모델과 MLP보다 encoder based model이 RMSE 및 R2 Score 측면에서 더 좋은 성능이 나옴
   - 또한 Valid 및 Test Score의 차이가 더 적은 것으로 보아, 자연어 처리 결과를 더욱 잘 반영하고 있다 판단 가능
-- *init_lr*과 *best_epoch*$^d$ 사이에 단조 감소 및 선형 관계성을 있다 볼 수 있지만, 각 *init_lr*별 *best_epoch*의 표준편차가 커서 차수 d를 정하기 위해서는 추가적인 실험 필요
-  - 상관계수가 0.7?으로 좋은 값이 나오지는 않음
+- *init_lr*과 *best_epoch*$^d$ 사이에 단조 감소 및 선형 관계성을 있다 볼 수 있지만, 각 *init_lr*별 *best_epoch*의 표준편차가 커서 차수 d를 정하기 위해서는 추가적인 실험 및 조사 필요
   - *best_epoch*의 중앙값 혹은 평균의 d제곱의 경우 $-0.75\leq d\leq0.75, d\neq 0$의 차수 d에 대해 R2 Score가 0.96 초과, RMSE 10 미만인 모델로 회귀분석이 가능
   - 임의로 149이상 550이하 숫자를 6개 뽑아 감소하는 순서로 나열할 경우, 위와 같은 성적이 나올 수 있는 숫자가 뽑힐 확률은 0.054가량
   - *init_lr*의 개수가 6개로 적기 때문에 $d<-0.75$ or $0.75<d$를 기각하기는 힘듦. 다만, 추가적인 실험을 했을 때 의미있는 결과가 나올 수 있다 추정 가능
@@ -607,9 +640,14 @@ f(best epoch) vs init_lr
 
 - 출간 연도 등으로 stratify하여 학습할 때 성능을 높히는 것이 가능한지 확인
 - *d_model*, *d_ff*, *head*, *N* 등의 모델 구조 관련 hyperparameter를 변경했을 때 성능이 어떻게 달라지는지 확인
+- *d*의 범위를 더 좁히기 위해 할 수 있는 추가적인 조사
+  - 선행 연구 및 관련 참고자료 조사
+  - *batch_size*에 따른 변화 추적
+  - 더 다양한 scale의 *init_lr*에서 조사
 - *d_model*, *batch_size* 등이 *best_epoch*에 끼치는 영향을 확인
-- Attention layer만을 이용한 모델 개발 및 성능 비교
-  - 단어 corpus를 다른 열의 내용에 대하여도 확장하거나, 다른 embedding model로 vector화 된 정보들이 섞여있을 경우 학습에 주의 할 점 조사
+- MLP와 혼합하지 않은 모델 개발 및 성능 비교
+  - 단어 corpus를 다른 열의 내용에 대하여도 확장
+  - 혹은 다른 embedding model로 vector화 된 정보들이 섞여있을 경우 학습에 주의 할 점 조사
 - 데이터를 보강하여 학습에 수월한 질 좋은 데이터셋 구성
   - 도서 정보 페이지에 정보 중, 도서 정가에 직접적인 영향을 주는 다른 정보(제본형태, 쪽수 등)를 추가적으로 크롤링
   - 베스트 셀러에 포함된 적 없는 도서도 대상으로 하기 위한 크롤링 방법 개발 필요
