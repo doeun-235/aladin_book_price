@@ -375,9 +375,9 @@
   *<b>도표.27</b> 시뮬레이션에 따른 max R2 score, min RMSE의 누적 확률 분포*
 
   - notation
-    - $\hat{\text{y}_{ (i,d) }}$ : $\text{y}_i$에 대한 $d$ 차 추정값. 즉, $(a_{ (i,d) }X_i+b_{(i,d)})^{1/d}$ or $0$
-    - $\tilde{d}$ : $\text{argmax}_{d}\left(\text{min}\left(R^2\text{ Score}(\text{y}_i,\hat{\text{y}_{(i,d)}}),R^2\text{ Score}(\text{y}_i^{d},a_{(i,d)}X_i+b_{(i,d)})\right)\right)$
-    - $d^*$ : $\text{argmin}_d$RMSE$(\text{y}_i,\hat{\text{y}_{(i,d)}})$
+    - $\hat{y}_{ (i,d) }$ : $\text{y}_i$에 대한 d차 추정값. 즉, $(a_{ (i,d) }X_i+b_{(i,d)})^{1/d}$ or 0
+    - $\tilde{d}$ : $\text{argmax}_{d}(\text{min}(R^2\text{ Score}(\text{y}_i,\hat{y}_{(i,d)}),R^2\text{ Score}(\text{y}_i^{d},a_{(i,d)}X_i+b_{(i,d)})))$
+    - $d^*$ : $\text{argmin}_d$ RMSE$(\text{y}_i,\hat{y}_{(i,d)})$
 
   ![simu3](./imgs/simu_fdt.png)
 
