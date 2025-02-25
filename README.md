@@ -2,6 +2,8 @@
 
 **사용된 스킬 셋**: PyTorch, NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
+## 0. 초록
+
 ## 1. 프로젝트 개요
 
 ### 배경
@@ -375,15 +377,15 @@
   *<b>도표.27</b> 시뮬레이션에 따른 max R2 score, min RMSE의 누적 확률 분포*
 
   - notation
-    - $\widehat{\text{y}_{ (i,d) }}$ : $\text{y}_i$에 대한 $d$ 차 추정값. 즉, $(a_{ (i,d) }X_i+b_{(i,d)})^{1/d}$ or $0$
-    - $\tilde{d}$ : $\argmax_{d}\left(\min\left(R^2\text{ Score}(\text{y}_i,\widehat{\text{y}_{(i,d)}}),R^2\text{ Score}(\text{y}_i^{d},a_{(i,d)}X_i+b_{(i,d)})\right)\right)$
-    - $d^*$ : $\argmin_d$RMSE$(\text{y}_i,\widehat{\text{y}_{(i,d)}})$
+    - $`\hat{y}_{(i,d)}`$ : $y_i$에 대한 $d$차 추정값. 즉, $`(a_{(i,d)}X_i+b_{(i,d)})^{1/d}`$ or $0$
+    - $\tilde{d}$ : $`\text{argmax}_{d}(\text{min}(R^2\text{ Score}(y_i,\hat{y}_{(i,d)}),R^2\text{ Score}(y_i^{d},a_{(i,d)}X_i+b_{(i,d)})))`$
+    - $d^*$ : $\text{argmin}_d$ RMSE$`(y_i,\hat{y}_{(i,d)})`$
 
   ![simu3](./imgs/simu_fdt.png)
 
   *<b>도표.28</b> d = d tilde 일 때 R2 score, RMSE에 따른 도수 분포표. 예를 들어, 우상단의 49는 RMSE 0이상 10미만, R2 score 0.98초과 1.00이하에 대한 도수*
 
-  - 즉, $0\leq \text{RMSE}(\text{y}_i,\widehat{\text{y}_{(i,\tilde{d})}})<10$, $0.96 < R^2\text{ Score}(\text{y}_i,\widehat{\text{y}_{(i,\tilde{d})}}),R^2\text{ Score}(\text{y}_i^{\tilde{d}},a_{(i,{\tilde{d}})}X_i+b_{(i,\tilde{d})}) \leq 1.0 $에 대한 통계적 확률은 0.054
+  - 즉, $`0\leq \text{RMSE}(y_i,\hat{y}_{(i,\tilde{d})})<10`$, $`0.96 < R^2\text{ Score}(y_i,\hat{y}_{(i,\tilde{d})}),R^2\text{ Score}(y_i^{\tilde{d}},a_{(i,{\tilde{d}})}X_i+b_{(i,\tilde{d})}) \leq 1.0 `$에 대한 통계적 확률은 0.054
 <!--
 - *step_num* = *dataset_size* $\cdot$ *epoch* 
 -->
@@ -438,7 +440,12 @@
 
   *<b>도표.34</b> test set의 정가, best model의 절대오차 및 상대오차 histogram*
 
-  - 정가 60000원 미만의 데이터가 train, valid, test set 기준 각각 0.9941, 0.9948, 0.9938,의 비율을 차지
+  - 정가 60000원 미만의 데이터가 test set 기준 0.9938의 비율을 차지
+    - train, valid set 기준 각각 0.9941, 0.9948의 비율을 차지
+  - best model의 test set 예측값에서 오차의 최소는 -530609.5 최대는 146356.1, 절대 오차의 최소는 0.0742
+    - 오차가 -20000 이상 20000 미만의 비율이 0.9829
+  - 상대오차의 최소와 최대는 각각 -0.9434, 35.3836. 절대값을 취한 상대오차의 경우 최소값이 5.0148e-6
+    - 상대오차가 -1 초과 4 미만인 데이터의 비율은 0.9954
 
   ![best_scatter](./imgs/best_scatter.png)
 
@@ -477,7 +484,7 @@
     - 다만 맨 끝의 계급은 구간 바깥의 값도 포함하고 있음
       - e.g. 도표.38.a에서, 정가 0원 이상 2000원 미만 가격의 책 중 상대 오차의 값이 4.0 이상인 데이터의 수는 68
       - e.g. 도표.39에서 -60000,-1.0에 해당하는 계급은 오차가 -58000 미만 상대오차가 -1.0 이하인 것으로, 해당 데이터의 수는 2
-  - best model의 test set 예측값에서 오차의 최소는 -530609.5 최대는 146356.1, 절대 오차의 최소는 0.0742. -20000 이상 20000 미만의 비율이 0.9829, -8337.54 이상 8337.54 미만의 비율이 0.8894, -6000 이상 6000 미만의 비율이 0.8013, -3000 이상 3000 미만의 비율은 0.5504. 절대 오차의 평균은 4163.47
+  - 오차가 -20000 이상 20000 미만의 비율이 0.9829, -8337.54 이상 8337.54 미만의 비율이 0.8894, -6000 이상 6000 미만의 비율이 0.8013, -3000 이상 3000 미만의 비율은 0.5504. 절대 오차의 평균은 4163.47
     - RMSE가 8337.54인 것을 감안하면, 절대오차가 8337.54 이상인 데이터의 수는 적지만, 절대오차가 매우 커서, RMSE 성능을 떨어뜨리는데 큰 영향을 주고 있음
   - 상대 오차가 -0.3 이상 0.3 미만인 부분의 비율은 0.6356, -0.4 이상 0.4 미만인 부분의 비율은 0.7427
     - MAPE가 0.359인 것을 감안하면, 상대 오차가 -0.4 미만 0.4 이상인 부분은 매우 넓게 분포해 있음을 추론 가능
