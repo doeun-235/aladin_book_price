@@ -375,15 +375,15 @@
   *<b>도표.27</b> 시뮬레이션에 따른 max R2 score, min RMSE의 누적 확률 분포*
 
   - notation
-    - $`\hat{y}_{(i,d)}`$ : $y_i$에 대한 d차 추정값. 즉, $`(a_{(i,d)}X_i+b_{(i,d)})^{1/d}`$ or 0
-    - $\tilde{d}$ : $\text{argmax}_{d}$$(\text{min}(R^2\text{ Score}(y_i,\hat{y}_{(i,d)}),R^2\text{ Score}(y_i^{d},a_{(i,d)}X_i+b_{(i,d)})))$
-    - $d^*$ : $\text{argmin}_d$ RMSE$(y_i,\hat{y}_{i,d})$
+    - $`\hat{y}_{(i,d)}`$ : $y_i$에 대한 $d$차 추정값. 즉, $`(a_{(i,d)}X_i+b_{(i,d)})^{1/d}`$ or $0$
+    - $\tilde{d}$ : $`\text{argmax}_{d}(\text{min}(R^2\text{ Score}(y_i,\hat{y}_{(i,d)}),R^2\text{ Score}(y_i^{d},a_{(i,d)}X_i+b_{(i,d)})))`$
+    - $d^*$ : $\text{argmin}_d$ RMSE$`(y_i,\hat{y}_{i,d})`$
 
   ![simu3](./imgs/simu_fdt.png)
 
   *<b>도표.28</b> d = d tilde 일 때 R2 score, RMSE에 따른 도수 분포표. 예를 들어, 우상단의 49는 RMSE 0이상 10미만, R2 score 0.98초과 1.00이하에 대한 도수*
 
-  - 즉, $0\leq \text{RMSE}(y_i,\hat{y}_{(i,\tilde{d})})<10$, $0.96 < R^2\text{ Score}(y_i,\hat{y}_{(i,\tilde{d})}),R^2\text{ Score}(y_i^{\tilde{d}},a_{(i,{\tilde{d}})}X_i+b_{(i,\tilde{d})}) \leq 1.0 $에 대한 통계적 확률은 0.054
+  - 즉, $`0\leq \text{RMSE}(y_i,\hat{y}_{(i,\tilde{d})})<10`$, $`0.96 < R^2\text{ Score}(y_i,\hat{y}_{(i,\tilde{d})}),R^2\text{ Score}(y_i^{\tilde{d}},a_{(i,{\tilde{d}})}X_i+b_{(i,\tilde{d})}) \leq 1.0 `$에 대한 통계적 확률은 0.054
 <!--
 - *step_num* = *dataset_size* $\cdot$ *epoch* 
 -->
