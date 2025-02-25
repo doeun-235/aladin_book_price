@@ -375,7 +375,7 @@
   *<b>도표.27</b> 시뮬레이션에 따른 max R2 score, min RMSE의 누적 확률 분포*
 
   - notation
-    - $\hat{y}_{(i,d)}$ : $y_i$에 대한 d차 추정값. 즉, $(a_{(i,d)}X_i+b_{(i,d)})^{1/d}$ or 0
+    - $`\hat{y}_{(i,d)}`$ : $y_i$에 대한 d차 추정값. 즉, $`(a_{(i,d)}X_i+b_{(i,d)})^{1/d}`$ or 0
     - $\tilde{d}$ : $\text{argmax}_{d}$$(\text{min}(R^2\text{ Score}(y_i,\hat{y}_{(i,d)}),R^2\text{ Score}(y_i^{d},a_{(i,d)}X_i+b_{(i,d)})))$
     - $d^*$ : $\text{argmin}_d$ RMSE$(y_i,\hat{y}_{i,d})$
 
