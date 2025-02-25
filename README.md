@@ -2,6 +2,8 @@
 
 **사용된 스킬 셋**: PyTorch, NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
+## 0. 초록
+
 ## 1. 프로젝트 개요
 
 ### 배경
@@ -377,7 +379,7 @@
   - notation
     - $`\hat{y}_{(i,d)}`$ : $y_i$에 대한 $d$차 추정값. 즉, $`(a_{(i,d)}X_i+b_{(i,d)})^{1/d}`$ or $0$
     - $\tilde{d}$ : $`\text{argmax}_{d}(\text{min}(R^2\text{ Score}(y_i,\hat{y}_{(i,d)}),R^2\text{ Score}(y_i^{d},a_{(i,d)}X_i+b_{(i,d)})))`$
-    - $d^*$ : $\text{argmin}_d$ RMSE$`(y_i,\hat{y}_{i,d})`$
+    - $d^*$ : $\text{argmin}_d$ RMSE$`(y_i,\hat{y}_{(i,d)})`$
 
   ![simu3](./imgs/simu_fdt.png)
 
