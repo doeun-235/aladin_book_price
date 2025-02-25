@@ -2,8 +2,9 @@ import time
 import numpy as np
 import pandas as pd
 from functools import wraps
-from sklearn.model_selection import train_test_split
 from collections import defaultdict
+from sklearn.model_selection import train_test_split
+
 from module_aladin.data_process import concat_data
 
 def record_time(func):

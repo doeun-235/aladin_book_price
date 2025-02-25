@@ -13,9 +13,9 @@ mpl.style.use("fivethirtyeight")
 mpl.rcParams.update({"figure.constrained_layout.use": True})
 
 import matplotlib.font_manager as fm
-font_list = fm.findSystemFonts(fontpaths=None, fontext='ttf')
-[fm.FontProperties(fname=font).get_name() for font in font_list if 'D2C' in font]
-plt.rc('font', family='D2Coding')
+#font_list = fm.findSystemFonts(fontpaths=None, fontext='ttf')
+#[fm.FontProperties(fname=font).get_name() for font in font_list if 'D2C' in font]
+#plt.rc('font', family='D2Coding')
 mpl.rcParams['axes.unicode_minus'] = False
 
 from module_aladin.util import get_vals_range, get_amp

@@ -112,9 +112,9 @@ def run(model,train_config,train_iter,valid_iter,total_epoch,warmup,best_loss,sa
         print(f'\tTrain Loss: {train_loss:.3f}\tTrain Score: {train_score:.3f}\tVal Loss: {valid_loss:.3f}\tVal Score: {valid_score:.3f}')
 
     print('Best Epoch: ',best_epoch)
-    return model,train_losses,valid_losses,train_scores, valid_scores
+    return model,train_losses,valid_losses,train_scores, valid_scores,best_epoch
 
-def test_n_plot(model, iterator, criterion,device,scatter=True,**kwargs):
+def get_test_rslt(model, iterator, criterion,device):
     model.eval()
     epoch_loss = 0
     Y_actual, Y_pred = list(),list()
@@ -132,15 +132,44 @@ def test_n_plot(model, iterator, criterion,device,scatter=True,**kwargs):
             Y_actual.append(y_actual)
 
     Y_actual, Y_pred = torch.cat(Y_actual), torch.cat(Y_pred).reshape(-1)
-    Y_rslt,Y_truth=Y_pred.detach().cpu().numpy(),Y_actual.detach().cpu().numpy()
-    if scatter:
-      fig,ax = plt.subplots()
-      sns.scatterplot(x=Y_truth,y=Y_rslt)
+    return Y_pred.detach().cpu().numpy(),Y_actual.detach().cpu().numpy()
+
+def test_n_plot(model, iterator, criterion,device,scatter=True,**kwargs):
+    Y_rslt,Y_truth = get_test_rslt(model,iterator,criterion,device)
+    fig,ax = plt.subplots()
+    if scatter: sns.scatterplot(x=Y_truth,y=Y_rslt,**kwargs)
     else :
-      g = sns.jointplot(x=Y_truth, y=Y_rslt, kind="hex", xlim = (0,60000), ylim = (0,60000),**kwargs)
+      if 'kind' not in kwargs : kwargs['kind'] = 'hist'
+      g = sns.jointplot(x=Y_truth, y=Y_rslt, xlim = (0,60000), ylim = (0,60000),**kwargs)
     score = r2_score(Y_truth,Y_rslt)
     mape = mean_absolute_percentage_error(Y_truth,Y_rslt)
-    print(math.sqrt(epoch_loss / len(iterator)), "\tr2 : ",score,"\tmape : ",mape)
+    print(math.sqrt(mse(Y_truth,Y_rslt)), "\tr2 : ",score,"\tmape : ",mape)
+    return fig,ax
+
+def plot_err_dist(y_pred,y_true,percent=False,**kwargs):
+  err = y_pred - y_true
+  if percent : err = err/y_true
+  if 'kind' not in kwargs : kwargs['kind'] = 'hist'
+  sns.jointplot(x=y_true,y=err,**kwargs)
+  #return fig,ax
+
+def plot_reg_val(y_pred,y_true,**kwargs):
+    y_mean = np.mean(y_true)    
+    val = np.abs((y_pred-y_mean)/(y_true-y_mean+1e-20))
+    print("calc done")
+    if 'kind' not in kwargs : kwargs['kind'] = 'hist'
+    sns.jointplot(x=y_true,y=val,**kwargs)
+   # return fig,ax
+
+def test_plot_err_dist(model, iterator, criterion,device,percent=False,**kwargs):
+  y_pred,y_true = get_test_rslt(model,iterator,criterion,device)
+  plot_err_dist(y_pred,y_true,percent=percent,**kwargs)
+  #return fig,ax
+
+def test_plot_reg_val(model, iterator, criterion,device,**kwargs):
+  y_pred,y_true = get_test_rslt(model,iterator,criterion,device)
+  plot_reg_val(y_pred,y_true,**kwargs)
+  #return fig,ax
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
