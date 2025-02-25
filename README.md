@@ -347,25 +347,25 @@ f(best epoch) vs init_lr
     *<b>수식. 1</b> Transformer 모델 제안 때 사용된 step_num에 따른 learnig rate 값*
 - $X=$ *init_lr*과 $y=$ *best_epoch<sup>d</sup>* 사이에 선형회귀 분석
   - $-3\leq d \leq 3 \text{ and } d \neq 0$ 조건을 만족하는 $d$에 대해 시뮬레이션. $0.01$ 간격으로 $d$ 값을 설정
-  - 도표.11의 7개의 *init_lr* 중 $1.76$e-4를 제외한 6개의 *init_lr*에 대해서 추정
-    - *init_lr*$=1.76$e-4의 경우 총 *epoch*가 550으로 제한된 영향을 받았기 때문
+  - 도표.11의 7개의 *init_lr* 중 1.76e-4를 제외한 6개의 *init_lr*에 대해서 추정
+    - *init_lr*=1.76e-4의 경우 총 *epoch*가 550으로 제한된 영향을 받았기 때문
 - 위 조건을 만족하는 $d$에 대해 *init_lr*으로 *best_epoch*<sup>$d$</sup>를 선형회귀 했을 때, $d=0.52$일 때 $R^2$ Score가 0.536로 제일 큼
 
     ![reg1](./imgs/regrslt1.png)
   
-    *<b>도표.23</b> 차수 $d$에 따른 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
+    *<b>도표.23</b> 차수 d에 따른 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
 
   - $d=0.52$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.537, RMSE = 54.305
   - $d=0.03$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.539, RMSE = 54.202으로 성적이 제일 좋음
   - 6개의 *init_lr*에 대하여 각각 38~48개의 *best_epoch* 값이 있기 때문에 $R^2$ Score는 좋은 결과를 얻기 힘듦
-  - RMSE값은 *best_epoch*의 *init_lr* 별 표준편차의 weighted mean과 비슷한 값으로 구해짐 
+  - RMSE값은 *best_epoch*의 *init_lr* 별 표준편차의 weighted mean과 비슷한 값으로 구해짐
     - 도표.15에서 *best_epoch* 값의 *init_lr* 별 표준편차를 weighted mean을 구하면, $56.137$이 나오고, oversampling한 것을 반영하면 $52.595$가 나옴
 
 - 위와 동일한 조건에서, 각 *init_lr*에 대해, *best_epoch*의 대표값만 사용한 경우, median을 사용하면 $d=0.30$일 때 $R^2$ Score가 0.981로 제일 큼
 
   ![reg2](./imgs/regrslt2.png)
 
-  *<b>도표.24</b> best_epoch의 median의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
+  *<b>도표.24</b> best_epoch의 median의 d 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
   
   - $d=0.30$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.985, RMSE = 7.609
 
@@ -373,7 +373,7 @@ f(best epoch) vs init_lr
 
   ![reg3](./imgs/regrslt3.png)
 
-  *<b>도표.25</b> best_epoch의 mean의 $d$ 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
+  *<b>도표.25</b> best_epoch의 mean의 d 제곱에 대한 선형회귀 모델의 결과 지표. <b>a.</b> R2 Score, <b>b.</b> RMSE*
   
   - $d=-0.10$일 때의 선형모델을 이용해, *init_lr*으로 *best_epoch*를 추정하는 경우, $R^2$ Score = 0.976, RMSE = 9.275
 
@@ -393,7 +393,7 @@ f(best epoch) vs init_lr
   *<b>도표.27</b> 시뮬레이션에 따른 max R2 score, min RMSE의 누적 확률 분포*
 
   - notation
-    - $\widehat{\text{y}_{(i,d)}}$ : $\text{y}_i$에 대한 $d$차 추정값. 즉, $(a_{(i,d)}X_i+b_{(i,d)})^{1/d}$ or $0$
+    - $\widehat{\text{y}_{ (i,d) }}$ : $\text{y}_i$에 대한 $d$ 차 추정값. 즉, $(a_{ (i,d) }X_i+b_{(i,d)})^{1/d}$ or $0$
     - $\tilde{d}$ : $\argmax_{d}\left(\min\left(R^2\text{ Score}(\text{y}_i,\widehat{\text{y}_{(i,d)}}),R^2\text{ Score}(\text{y}_i^{d},a_{(i,d)}X_i+b_{(i,d)})\right)\right)$
     - $d^*$ : $\argmin_d$RMSE$(\text{y}_i,\widehat{\text{y}_{(i,d)}})$
 
@@ -406,12 +406,29 @@ f(best epoch) vs init_lr
 - *step_num* = *dataset_size* $\cdot$ *epoch* 
 -->
 
+  ![regrslt0](./imgs/reg_rslts_plot0.png)
+
+  *<b>도표.29</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
+
 - test : 1.76e-4의 median, mean에 대해 비교
 
-*<b>도표.</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
-(d= 3개)
+  ||median|mean|
+  |-|-:|-:|
+  |predict|473.17|491.01|
+  |actual|466|465.14|
+  |error|7.17|25.01|
 
-- d에 따라 후보 함수 값 자체가 큰 차이가 나지 않는다
+  *<b>도표.30</b> init_lr = 1.76e-4에서 median 및 mean 값 예측 및 차이*
+
+  - median, mean을 각각 d=0.3, -0.1일 때 회귀 모델로 예측함
+  - median의 오차에 비해 mean의 오차가 큼
+    - mean보다 median이 최대 epoch 수가 제한된 것의 영향을 덜 받기 때문으로 예상
+  - median을 예측할 때, 1.76e-4에서의 예측값이 d에 따라 편차가 있음
+    - validation 및 test set을 추가로 구성하면 적합한 d의 범위를 좁힐 때 도움을 받을 수 있을 것으로 예상
+
+  ![regrslt1](./imgs/reg_rslts_plot1.png)
+
+  *<b>도표.31</b> init_lr과 best epoch의 median 사이의 회귀모델*
 
 ### 모델 성능
 
@@ -427,15 +444,23 @@ f(best epoch) vs init_lr
     |MAPE    |    0.30884  |    0.357172 |    0.359422 |
     |R2_SCORE|    0.735617 |    0.499996 |    0.4744   |
 
-    *<b>도표.</b> batch_size = 20480 일 때 best model의 성능*
+    *<b>도표.32</b> batch_size = 20480 일 때 best model의 성능*
 
-![best_loss](./imgs/best0.png)
+- 학습 추이 및 결과:
 
-*<b>도표.</b> best model의 학습에 따른 train loss와 valid loss (RMSE), valid score (R2 Score)*
+  ![best_loss](./imgs/best0.png)
 
-![best_scatter](./imgs/best_scatter.png)
+  *<b>도표.33</b> best model의 학습에 따른 train loss와 valid loss (RMSE), valid score (R2 Score)*
+  
+  ![best_dist](./imgs/rslt_dist.png)
 
-*<b>도표.</b> best model의 test 데이터에 대해 참 값에 따른 예측값의 산포도*
+  *<b>도표.34</b> test set의 정가, best model의 절대오차 및 상대오차 histogram*
+
+  - 정가 60000원 미만의 데이터가 train, valid, test set 기준 각각 0.9941, 0.9948, 0.9938,의 비율을 차지
+
+  ![best_scatter](./imgs/best_scatter.png)
+
+  *<b>도표.35</b> best model의 test 데이터에 대해 참 값에 따른 예측값의 산포도*
 
 <!--
 ![best_trn](./imgs/best1_trn.png)
@@ -446,22 +471,30 @@ f(best epoch) vs init_lr
 
 *<b>도표.</b> best model의 정가 60,000원 이하 valid 데이터에 대해 참 값에 따른 예측값의 histogram*
 -->
+  ![best_tst](./imgs/best1_tst.png)
 
-![best_tst](./imgs/best1_tst.png)
+  *<b>도표.36</b> best model의 정가 60,000원 이하 test 데이터에 대해 참 값에 따른 예측값의 histogram*
 
-*<b>도표.</b> best model의 정가 60,000원 이하 test 데이터에 대해 참 값에 따른 예측값의 histogram*
+  ![best_err](./imgs/best2_err.png)
 
-![best_err](./imgs/best2_err.png)
+  *<b>도표.37</b> best model의 test 데이터 예측값에 대한 오차의 도수분포표*
 
-*<b>도표.</b> best model의 test 데이터 예측값에 대한 절대 오차의 도수분포표*
+  ![best_err](./imgs/best2_per_err.png)
 
-![best_err](./imgs/best2_per_err.png)
+  *<b>도표.38</b> best model의 test 데이터 예측값에 대한 상대 오차의 도수분포표. <b>a.</b> 절대도수 <b>b.</b> 상대도수*
 
-*<b>도표.</b> best model의 test 데이터 예측값에 대한 상대 오차의 도수분포표. <b>a.</b> 절대도수 <b>b.</b> 상대도수*
+  - 도표.38.b에서 상대도수가 0.01 이상인 부분들의 비율은 총 0.9009
+    - 그림에서 회색 글씨로 상대도수가 표시된 부분은 0.01 미만인 부분
 
-![best_err](./imgs/best2_err_vs_per_err.png)
+  ![best_err](./imgs/best2_err_vs_per_err.png)
 
-*<b>도표.</b> best model의 test 데이터 예측값에 대한 절대 오차와 상대 오차의 도수분포표*
+  *<b>도표.39</b> best model의 test 데이터 예측값에 대한 오차와 상대 오차의 도수분포표*
+
+  - best model의 test set 예측값에서 오차의 최소는 -530609.5 최대는 146356.1, 절대 오차의 최소는 0.0742. -20000 이상 20000 미만의 비율이 0.9829, -8337.54 이상 8337.54 미만의 비율이 0.8894, -6000 이상 6000 미만의 비율이 0.8013, -3000 이상 3000 미만의 비율은 0.5504. 절대 오차의 평균은 4163.47
+    - RMSE가 8337.54인 것을 감안하면, 절대오차가 8337.54 이상인 데이터의 수는 적지만, 절대오차가 매우 커서, RMSE 성능을 떨어뜨리는데 큰 영향을 주고 있음
+  - 상대 오차가 -0.3 이상 0.3 미만인 부분의 비율은 0.6356, -0.4 이상 0.4 미만인 부분의 비율은 0.7427
+    - MAPE가 0.359인 것을 감안하면, 상대 오차가 -0.4 미만 0.4 이상인 부분은 매우 넓게 분포해 있음을 추론 가능
+  - 
 
 <!--colorbar 추가, x축, y축 이름-->
 
@@ -477,7 +510,7 @@ f(best epoch) vs init_lr
     | MAPE     |    0.106272 |    0.298254 |    0.301357 |
     | R2_SCORE |    0.916681 |    0.373757 |    0.376662 |
   
-    *<b>도표.</b> 전체 데이터에 대한 RFR model 성능*
+    *<b>도표.40</b> 전체 데이터에 대한 RFR model 성능*
 
 <!--
     | **test2**|       Train |       Valid |        Test |
@@ -500,7 +533,7 @@ f(best epoch) vs init_lr
     |-:|-:|-:|
     |4|  1|  1|
   
-    *<b>도표.</b> XGBoost 관련 hyperparameter*
+    *<b>도표.41</b> XGBoost 관련 hyperparameter*
   - 성능
 
     | **XGB**|       Train |       Valid |        Test |
@@ -509,7 +542,7 @@ f(best epoch) vs init_lr
     | MAPE     |    0.351907 |    0.36065  |    0.366424 |
     | R2_SCORE |    0.460038 |    0.334845 |    0.311233 |
 
-    *<b>도표.</b> 전체 데이터에 대한 XGBoost model 성능*
+    *<b>도표.42</b> 전체 데이터에 대한 XGBoost model 성능*
 
 <!--
   | **test2**|       Train |       Valid |        Test |
@@ -533,7 +566,7 @@ f(best epoch) vs init_lr
     |32|8|batch norm과 dropout을 적용|
     |8|1|output 출력|
 
-    *<b>도표.</b> MLP model의 각 layer별 입력 및 출력 tensor의 차원*
+    *<b>도표.43</b> MLP model의 각 layer별 입력 및 출력 tensor의 차원*
   
     |init_lr|factor|adam_eps|patience|warmup|
     |-:|-:|-:|-:|-:|
@@ -543,7 +576,8 @@ f(best epoch) vs init_lr
     |-:|-:|-:|-:|
     |700|1.0|5e-9|0.1|
 
-    *<b>도표.</b> MLP model 학습 hyperparameter*
+    *<b>도표.44</b> MLP model 학습 hyperparameter*
+  
   - 학습 결과
   
     |**MLP**|Train|Valid|Test|
@@ -552,7 +586,7 @@ f(best epoch) vs init_lr
     |MAPE|0.37203|0.38830|0.39802|
     |R2 SCORE|0.38263|0.26371|0.23795|
 
-    *<b>도표.</b> 전체 데이터에 대한 MLP model 성능* 
+    *<b>도표.45</b> 전체 데이터에 대한 MLP model 성능* 
 
 ## 7. 결과 분석
 
@@ -562,7 +596,7 @@ f(best epoch) vs init_lr
 |MAPE    |    0.359422 |    0.30136 |    0.36642  |    0.39802  |
 |R2 SCORE|    0.4744   |    0.37666 |    0.31123  |    0.23795  |
 
-*<b>도표.</b> 각 실험 별 best model과 성능*
+*<b>도표.46</b> 각 실험 별 best model과 성능*
 
 - MAPE는 RFR이 제일 좋으나, R2 Score가 가장 높은 것, 즉 책 정보의 변화가 가격 예측의 차이에 가장 잘 반영된 것은 Encoder based model
 - 이에 Encoder based model일 때 RMSE도 가장 작게 나왔음
