@@ -376,8 +376,8 @@
 
   - notation
     - $\hat{\text{y}_{ (i,d) }}$ : $\text{y}_i$에 대한 $d$ 차 추정값. 즉, $(a_{ (i,d) }X_i+b_{(i,d)})^{1/d}$ or $0$
-    - $\tilde{d}$ : $\argmax_{d}\left(\min\left(R^2\text{ Score}(\text{y}_i,\hat{\text{y}_{(i,d)}}),R^2\text{ Score}(\text{y}_i^{d},a_{(i,d)}X_i+b_{(i,d)})\right)\right)$
-    - $d^*$ : $\argmin_d$RMSE$(\text{y}_i,\hat{\text{y}_{(i,d)}})$
+    - $\tilde{d}$ : $\text{argmax}_{d}\left(\text{min}\left(R^2\text{ Score}(\text{y}_i,\hat{\text{y}_{(i,d)}}),R^2\text{ Score}(\text{y}_i^{d},a_{(i,d)}X_i+b_{(i,d)})\right)\right)$
+    - $d^*$ : $\text{argmin}_d$RMSE$(\text{y}_i,\hat{\text{y}_{(i,d)}})$
 
   ![simu3](./imgs/simu_fdt.png)
 
