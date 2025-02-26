@@ -1,8 +1,17 @@
-# 알라딘 베스트셀러 데이터셋을 이용한 encoder-only transformer 기반 도서 정가 예측 모델
+# 알라딘 베스트셀러 데이터셋을 이용한, encoder-only transformer 기반 도서 정가 예측 모델 개발 및 initial learning rate와 best epoch의 분포 사이 관계 조사
 
 **사용된 스킬 셋**: PyTorch, NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
 ## 0. 초록
+
+- [알라딘 중고도서 가격 예측 프로젝트 <sub>[1]</sub>][(OLPJ24)]에서 구축한 알라딘 베스트셀러 데이터셋을 사용하여, 저자, 책이름, 출간날짜 등의 정보로 정가를 예측
+- encoder-only transformer 기반 모델을 개발한 뒤, 성적을 평가하고 initial learning rate(이하 *init_lr*)와 best_epoch의 분포 사이 관계 조사
+- 성적 : **RMSE** 8337.54, **R2 Score** 0.4744. RMSE, R2 Score에서 Random Forest나 XGBoost 등 보다 좋은 성적을 기록
+- ReduceLROnPlateau scheduler를 사용할 때 *init_lr*에 따른 best_epoch의 분포를 보기 위해 7개 *init_lr*에 대해 총 200번의 학습 진행
+- *best_epoch*의 분포와 *init_lr* 사이 관계식을 결정하기엔 부족하지만, 추가적인 조사를 했을 때 유의미한 결과가 나올 가능성을 시사하는 결과가 나옴
+  - 최대 epoch 제한에 영향받지 않은 6개의 *init_lr*에 대해, *best_epoch*<sup>*d*</sup>의 median 회귀 시 R2 Score 0.96 초과하고, 해당 모델로 *best_epoch*의 median을 회귀했을 때 RMSE 10 미만인 선형회귀 모델을 $-0.75\leq d \leq 0.75, d\neq0$의 $d$에 대해 모두 찾을 수 있음
+  - 임의의 숫자들로 유사한 조건에서 시뮬레이션 했을때, 비슷한 수준의 성적이 나올 통계적 확률은 0.054 정도
+  - 나머지 하나의 *init_lr*에서의 *best_epoch*의 median을 오차 8 미만으로 예측
 
 ## 1. 프로젝트 개요
 
@@ -323,7 +332,7 @@
 #### *init_lr*과 *best_epoch* 사이 관계
 
 - 위 실험에서는 *patience* 만큼 *score*의 개선이 없으면 *factor* 배 *learning rate*를 감소시키는 scheduling을 사용
-- *learning rate*를 지수적으로 감소시키는 scheduling을 VSPU17에서 사용된 scheduling은 큰 차이가 있기 때문에 <i>수식 1[<sub>[2]</sub>][(VSPU17)]</i>과 직접적인 비교는 쉽지 않음
+- *learning rate*를 지수적으로 감소시키는 scheduling을 [VSPU17][(VSPU17)]에서 사용된 scheduling은 큰 차이가 있기 때문에 <i>수식 1[<sub>[2]</sub>][(VSPU17)]</i>과 직접적인 비교는 쉽지 않음
   - Transformer 모델 제안 논문에서는 <i>수식 1</i>과 같이 <i>step_num<sup>-0.5</sup></i>에 비례하여 *learning_rate*를 변화시킴
 
     ![eq](./imgs/equation.png)
@@ -635,29 +644,41 @@
   - parameter 양자화를 하면, 학습 및 추론 속도도 향상될 수 있음
 - 정가 예측에 큰 도움을 줄 수 있는 추가적인 정보(제본 형태, 쪽수 등)를 데이터셋에 추가하지 않고 학습 진행
   - 현 실험에서 hyperparmeter 조정하는 것보다 해당 데이터 추가하는 것이 성적 향상에 더 큰 영향을 줄 것으로 예상
-- Attention을 이용한 다양한 모델, 특히 attention layer로만 구성된 모델을 이용한 학습을 시도해보지 못함
+- MLP와 혼합하지 않은 Transformer 모델을 이용한 학습을 시도해보지 못함
 - 행렬 계산을 이용한 Transformer 모델이 연산속도 측면에서 갖는 장점을 충분히 활용했는지 평가 필요
   - *d_model*의 값이 커도 모델의 step 당 연산 속도에 큰 영향을 주지 않는 것이 연산 속도 측면에서 큰 장점
   - *d_model*의 값이 크면 parameter의 개수가 많아지므로, 원활한 학습에 필요한 데이터 양, step 등이 커질 수 있음
-  - 따라서 *d_model*의 값을 설정할 때 한계가 있는 상황인데, 데이터 셋을 확장하는 등 *d_model*을 늘려도 괜찮을 수 있는 조사를 하지 않음
+  - 따라서 *d_model*의 값을 설정할 때 한계가 있는 상황인데, 데이터 셋을 확장하는 등 *d_model*을 늘려도 괜찮은지에 대한 조사를 하지 않음
+- *best_epoch*<sup>*d*</sup> 회귀 예측에서 train/validation/test set으로 나눌 수 있을 정도로 다양한 *init_lr*에 대한 조사를 진행하지 못 했음
 - 저자명, 출판사를 인코딩 중 기타 항목으로 처리할 때 threshold 기준의 구체적인 근거를 제시하지 못 함
-  - 추가적인 조사를 통해 더 객관적이고 제시 가능한 근거 확립 가능
 
 ## 9. 추후 과제
 
+#### 성능 개선
+
 - 출간 연도 등으로 stratify하여 학습할 때 성능을 높히는 것이 가능한지 확인
 - *d_model*, *d_ff*, *head*, *N* 등의 모델 구조 관련 hyperparameter를 변경했을 때 성능이 어떻게 달라지는지 확인
-- *d*의 범위를 더 좁히기 위해 할 수 있는 추가적인 조사
-  - 선행 연구 및 관련 참고자료 조사
-  - *batch_size*에 따른 변화 추적
-  - 더 다양한 scale의 *init_lr*에서 조사
-- *d_model*, *batch_size* 등이 *best_epoch*에 끼치는 영향을 확인
-- MLP와 혼합하지 않은 모델 개발 및 성능 비교
+- MLP와 혼합 하지 않은 encoder-only-transformer 모델 개발 및 성능 비교
   - 단어 corpus를 다른 열의 내용에 대하여도 확장
   - 혹은 다른 embedding model로 vector화 된 정보들이 섞여있을 경우 학습에 주의 할 점 조사
 - 데이터를 보강하여 학습에 수월한 질 좋은 데이터셋 구성
   - 도서 정보 페이지에 정보 중, 도서 정가에 직접적인 영향을 주는 다른 정보(제본형태, 쪽수 등)를 추가적으로 크롤링
   - 베스트 셀러에 포함된 적 없는 도서도 대상으로 하기 위한 크롤링 방법 개발 필요
+
+#### best_epoch 분포 관련
+
+- 선행 연구 및 관련 참고자료 조사
+- 단일 조건에서 *best_epoch*의 분포에 대한 추가적인 조사
+  - median 등을 안정적으로 예측하기 위해서 몇 번 정도의 시행이면 충분할지 조사
+- *best_epoch*<sup>*d*</sup> 회귀에서 *d*의 범위를 좁히기 위해 할 수 있는 조사
+  - *batch_size*에 따른 변화 추적
+  - 더 다양한 scale의 *init_lr*에서 조사
+    - *init_lr* 등으로 validation/test set을 구성해 회귀 정확도 평가
+- *d_model*, *batch_size* 등이 *best_epoch*에 끼치는 영향을 확인
+
+#### 기타
+
+- 저자명, 출판사를 인코딩 중 기타 항목으로 처리할 때 threshold 기준의 구체적인 근거 수립
 - 위의 모델 외에도 다양한 모델 개발 가능
   - 카테고리와 도서 명, 출판사, 정가 등의 정보로 출간 연도 예측
   - 도서 정보 및 중고 시장에서의 가격을 바탕으로 알라딘의 SalesPoint 산정법 추정
