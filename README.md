@@ -1,4 +1,4 @@
-# 알라딘 베스트셀러 데이터셋을 이용한, encoder-only transformer 기반 도서 정가 예측 모델 개발 및 initial learning rate와 best epoch의 분포 사이 관계 조사
+# 알라딘 베스트셀러 데이터셋을 이용한, encoder only transformer 기반 도서 정가 예측 모델 개발 및 initial learning rate와 best epoch의 분포 사이 관계 조사
 
 **사용된 스킬 셋**: PyTorch, NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
