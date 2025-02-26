@@ -1,8 +1,15 @@
-# 알라딘 베스트셀러 데이터셋을 이용한 encoder-only transformer 기반 도서 정가 예측 모델
+# 알라딘 베스트셀러 데이터셋을 이용한, encoder-only transformer 기반 도서 정가 예측 모델 개발 및 initial learning rate와 best epoch의 분포 사이 관계 조사
 
 **사용된 스킬 셋**: PyTorch, NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
 ## 0. 초록
+
+- [알라딘 중고도서 가격 예측 프로젝트 <sub>[1]</sub>][(OLPJ24)]에서 구축한 알라딘 베스트셀러 데이터셋을 사용하여, 저자, 책이름, 출간날짜 등의 정보로 정가를 예측
+- encoder-only transformer 기반 모델을 개발하여, 성적을 평가하고 initial learning rate(이하 *init_lr*)와 best_epoch의 분포 사이 관계 조사
+- 성적 : **RMSE** 8337.54, **R2 Score** 0.4744. RMSE, R2 Score에서 Random Forest나 XGBoost 등 보다 좋은 성적을 기록
+- ReduceLROnPlateau scheduler를 사용할 때 *init_lr*에 따른 best_epoch의 분포를 보기 위해 7개 *init_lr*에 대해 총 200번의 학습 진행
+  - 최대 epoch 제한에 영향받지 않은 6개의 *init_lr*에 대해, *best_epoch*<sup>*d*</sup>의 median 회귀 시 R2 Score 0.96 초과하고, 해당 모델로 *best_epoch*의 median을 회귀했을 때 RMSE 10 미만인 선형회귀 모델을 $-0.75\leq d \leq 0.75, d\neq0$의 $d$에 대해 모두 찾을 수 있음
+  - *best_epoch*의 분포와 *init_lr* 사이 관계식을 결정하기엔 부족하지만, 임의의 숫자들을 유사한 조건으로 골랐을 때, 해당 수준의 성적이 나올 통계적 확률이 시뮬레이션 결과 0.054정도 나오는 등을 감안하면, 추가적인 조사를 했을 때 유의미한 결과가 나올 가능성이 있음
 
 ## 1. 프로젝트 개요
 
@@ -639,10 +646,9 @@
 - 행렬 계산을 이용한 Transformer 모델이 연산속도 측면에서 갖는 장점을 충분히 활용했는지 평가 필요
   - *d_model*의 값이 커도 모델의 step 당 연산 속도에 큰 영향을 주지 않는 것이 연산 속도 측면에서 큰 장점
   - *d_model*의 값이 크면 parameter의 개수가 많아지므로, 원활한 학습에 필요한 데이터 양, step 등이 커질 수 있음
-  - 따라서 *d_model*의 값을 설정할 때 한계가 있는 상황인데, 데이터 셋을 확장하는 등 *d_model*을 늘려도 괜찮을 수 있는 조사를 하지 않음
+  - 따라서 *d_model*의 값을 설정할 때 한계가 있는 상황인데, 데이터 셋을 확장하는 등 *d_model*을 늘려도 괜찮은지에 대한 조사를 하지 않음
 - *best_epoch*<sup>*d*</sup> 회귀 예측에서 train/validation/test set으로 나눌 수 있을 정도로 다양한 *init_lr*에 대한 조사를 진행하지 못 했음
 - 저자명, 출판사를 인코딩 중 기타 항목으로 처리할 때 threshold 기준의 구체적인 근거를 제시하지 못 함
-  - 추가적인 조사를 통해 더 객관적이고 제시 가능한 근거 확립 가능
 
 ## 9. 추후 과제
 
@@ -670,6 +676,7 @@
 
 #### 기타
 
+- 저자명, 출판사를 인코딩 중 기타 항목으로 처리할 때 threshold 기준의 구체적인 근거 수립
 - 위의 모델 외에도 다양한 모델 개발 가능
   - 카테고리와 도서 명, 출판사, 정가 등의 정보로 출간 연도 예측
   - 도서 정보 및 중고 시장에서의 가격을 바탕으로 알라딘의 SalesPoint 산정법 추정
