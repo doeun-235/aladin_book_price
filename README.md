@@ -5,11 +5,13 @@
 ## 0. 초록
 
 - [알라딘 중고도서 가격 예측 프로젝트 <sub>[1]</sub>][(OLPJ24)]에서 구축한 알라딘 베스트셀러 데이터셋을 사용하여, 저자, 책이름, 출간날짜 등의 정보로 정가를 예측
-- encoder-only transformer 기반 모델을 개발하여, 성적을 평가하고 initial learning rate(이하 *init_lr*)와 best_epoch의 분포 사이 관계 조사
+- encoder-only transformer 기반 모델을 개발한 뒤, 성적을 평가하고 initial learning rate(이하 *init_lr*)와 best_epoch의 분포 사이 관계 조사
 - 성적 : **RMSE** 8337.54, **R2 Score** 0.4744. RMSE, R2 Score에서 Random Forest나 XGBoost 등 보다 좋은 성적을 기록
 - ReduceLROnPlateau scheduler를 사용할 때 *init_lr*에 따른 best_epoch의 분포를 보기 위해 7개 *init_lr*에 대해 총 200번의 학습 진행
+- *best_epoch*의 분포와 *init_lr* 사이 관계식을 결정하기엔 부족하지만, 추가적인 조사를 했을 때 유의미한 결과가 나올 가능성을 시사하는 결과가 나옴
   - 최대 epoch 제한에 영향받지 않은 6개의 *init_lr*에 대해, *best_epoch*<sup>*d*</sup>의 median 회귀 시 R2 Score 0.96 초과하고, 해당 모델로 *best_epoch*의 median을 회귀했을 때 RMSE 10 미만인 선형회귀 모델을 $-0.75\leq d \leq 0.75, d\neq0$의 $d$에 대해 모두 찾을 수 있음
-  - *best_epoch*의 분포와 *init_lr* 사이 관계식을 결정하기엔 부족하지만, 임의의 숫자들을 유사한 조건으로 골랐을 때, 해당 수준의 성적이 나올 통계적 확률이 시뮬레이션 결과 0.054정도 나오는 등을 감안하면, 추가적인 조사를 했을 때 유의미한 결과가 나올 가능성이 있음
+  - 임의의 숫자들로 유사한 조건에서 시뮬레이션 했을때, 비슷한 수준의 성적이 나올 통계적 확률은 0.054 정도
+  - 나머지 하나의 *init_lr*에서의 *best_epoch*의 median을 오차 8 미만으로 예측
 
 ## 1. 프로젝트 개요
 
