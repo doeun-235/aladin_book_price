@@ -1,4 +1,4 @@
-# 알라딘 베스트셀러 데이터셋을 이용한, encoder-only transformer 기반 도서 정가 예측 모델 개발 및 initial learning rate와 best epoch의 분포 사이 관계 조사
+# 알라딘 베스트셀러 데이터셋을 이용한, encoder only transformer 기반 도서 정가 예측 모델 개발 및 initial learning rate와 best epoch의 분포 사이 관계 조사
 
 **사용된 스킬 셋**: PyTorch, NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
@@ -26,7 +26,7 @@
 - 알라딘 중고도서 가격 예측 프로젝트[<sub>[1]</sub>][(OLPJ24)]에서 구축한 데이터 셋을 이용해, 도서 정보로 정가를 예측하는 회귀 모델 개발
 - Attention 기반 모델을 PyTorch를 이용해 설계 및 학습 진행
   - Attention 및 Transformer에 대해 학습하는 차원에서 Pytorch를 이용해 직접 구현
-  - *step 수*와 *learning rate* 사이에, 논문에서 소개 된 *learning rate* 관련 식[<sub>[2]</sub>][(VSPU17)]에서와 동일한 관계를 갖는지 확인
+  - 논문에서 사용한 scheduler 관련 식[<sub>[2]</sub>][(VSPU17)]에서 착안하여, exponential하게 감소하는 scheduler를 사용할 때도 *적정 step 수*와 *learning rate* 사이에 유사한 관계를 갖는지 확인
 - 기타 모델과 여러 성능 지표 및 실험을 통하여 Attention 기반 모델의 성능을 평가
   - Random Forest Regressor, XGBoost 등의 Machine learning 모델 및 Multilayer Perceptron 모델과 성능 비교
 
@@ -120,7 +120,7 @@
 - 출간일 : DateTime 타입으로 파싱
 - ItemId, 정가, 판매가 : 정수 형태로 변환
 
-### [인코딩 및 스케일링](./research/240716_encoding_bookinfo.ipynb)
+### [인코딩](./research/240716_encoding_bookinfo.ipynb) 및 [스케일링](./research/241023_preprocess_for_pred_rglr.ipynb)
 
 - validation 및 test set의 데이터가 전처리에 영향을 주지 않도록 주의하여 진행
   - train set을 전처리 하면서 결정된 함수 및 관련 내용들을 validation 및 test set에 일괄적으로 적용
@@ -201,25 +201,6 @@
     | (*d_mlp* // 2, 1) | model output으로 연결되는 linear layer|
 
     *<b>도표.9</b> MLP submodule의 layer별 설명*
-  
-<!--
-
-### learning rate 관련 실험
-
-- *patience* 만큼 *score*의 개선이 없으면 *factor* 배 *learning rate*를 감소시키는 scheduling을 사용 예정
-- *learning rate*를 지수적으로 감소시키는 scheduling을 하기 위해서는 설정이 처음 Transformer가 제안 된 논문에서와 달라야 함
-  - <i>수식 1[<sub>[2]</sub>][(VSPU17)]</i>와 같이 <i>step_num<sup>-0.5</sup></i>에 비례하여 *learning_rate*를 변화시킴
-
-    ![eq](./imgs/equation.png)
-
-    *<b>수식. 1</b> Transformer 모델 제안 때 사용된 step_num에 따른 learnig rate 값*
-- 다음 내용을 가정하면, 아래의 전개를 통해 지수적으로 scheduling할 경우 <i>수식 2</i>과 같이 *initial learning rate*과 학습이 완료되는 epoch 사이 관계식을 가질 것이라 추정할 수 있다.
-  - 이 실험에 쓰인 모델에도 수식 1이 유효
-  - 전체 학습 동안의 *learning rate*의 합이 parameter가 바뀐 경로의 길이와 관련
-  - 학습의 진행 정도와 경로의 길이가 관련있고, 모델 학습이 충분히 진행되기 위해서는 경로의 길이가 특정 수치 이상이 되어야 함
-  - 동일한 optimizer를 사용했을 때, 경로의 길이가 유사하면 모델 학습도 수준에 도달할 수 있을 것이다?
-  - (간략하게 아이디어를 진행해도 될 것이다)
--->
 
 ## 6. 실험 결과
 
@@ -229,6 +210,7 @@
 - encoder based model 학습에서의 hyperparameter를 변경하며 학습 성능 평가
 - **batch size** : 20480
 - **optimizer** : Adam
+
   |adam_eps|weight_decay|
   |-:|-:|
   |5e-7|5e-20|
@@ -401,7 +383,7 @@
 
   ![regrslt0](./imgs/reg_rslts_plot0.png)
 
-  *<b>도표.29</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
+  *<b>도표.29</b> init_lr별 best epoch의 산포도 및 회귀선*
 
 - test : 1.76e-4의 median, mean에 대해 비교
 
@@ -447,7 +429,7 @@
   
   ![best_dist](./imgs/rslt_dist.png)
 
-  *<b>도표.34</b> test set의 정가, best model의 절대오차 및 상대오차 histogram*
+  *<b>도표.34</b> test set의 정가, best model의 오차 및 상대오차 histogram*
 
   - 정가 60000원 미만의 데이터가 test set 기준 0.9938의 비율을 차지
     - train, valid set 기준 각각 0.9941, 0.9948의 비율을 차지
@@ -624,7 +606,7 @@
 - 이에 encoder based model일 때 RMSE도 가장 작게 나왔음
 - batch size 20480 기준, A100으로 encoder based model 학습시 550epoch에 약 1시간 걸림. init_lr = 4.46e-4 기준, best epoch의 median이 243, q3가 283.5인 것을 감안하면, 300 epoch로도 충분할 것으로 예상 (약 36분)
   - 4.46e-4~5.54e-4 중 정한다면 *init_lr*의 차이로 성능을 개선하고자 하는 것은 큰 의미가 없을 수 있음.
-- $-1<d<1, d\neq0$에 대해 *init_lr*과 *best_epoch<sup>d</sup>* 사이 선형관계를 가짐. 다만, 각각의 *init_lr*에 대한 *best_epoch*의 표준편차가 크기 때문에 d를 더 좁히는 것은 현 데이터로는 과하다 판단.
+- $-0.75\leq d \leq 0.75, d\neq0$에 대해 *init_lr*과 *best_epoch<sup>d</sup>* 사이 높은 성적을 갖는 선형회귀 모델을 찾을 수  있음. 다만, 각각의 *init_lr*에 대한 *best_epoch*의 표준편차가 크고 *init_lr*의 개수가 적으며, 이를 위한 validation/test set을 충분히 구성하지는 못했기 때문에 d를 더 좁히는 것은 과한 추측일 수 있음.
 
 ## 8. 결론 및 한계
 
@@ -688,6 +670,8 @@
 1. [OLPJ24][(OLPJ24)] : Doeun Oh, Junseong Lee, Yerim Park, and Hongseop Jeong, 알라딘 중고 도서 데이터셋 구축 및 그에 기반한 중고 서적 가격 예측 모델, GitHub, 2024
 2. [VSPU17][(VSPU17)]: Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
 3. [K19][(K19)]: hyunwoongko, transformer, GitHub, 2019
+4. [Monte Carlo Method, Wikipedia](https://en.wikipedia.org/wiki/Monte_Carlo_method)
+5. [Linear regression, Wikipedia](https://en.wikipedia.org/wiki/Linear_regression)
 
 [(OLPJ24)]:https://github.com/kdt-3-second-Project/aladin_usedbook "OLPJ24"
 [(VSPU17)]:https://arxiv.org/abs/1706.03762 "VSPU17"
