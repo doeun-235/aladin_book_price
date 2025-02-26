@@ -1,4 +1,4 @@
-# 알라딘 베스트셀러 데이터셋을 이용한 encoder-only transformer 도서 정가 예측 모델
+# 알라딘 베스트셀러 데이터셋을 이용한 encoder-only transformer 기반 도서 정가 예측 모델
 
 **사용된 스킬 셋**: PyTorch, NumPy, Pandas, Matplotlib, re, Scikit-learn, xgboost, [Mecab](https://pypi.org/project/python-mecab-ko/)
 
@@ -137,7 +137,7 @@
 - **INPUT** : (*batch_size*, 64) $\rightarrow$ **OUTPUT** : (*batch_size*, 1)
 - self attention layer 기반의 encoder(이하 attention based encoder)에 multilayer perceptron (이하 MLP) layer들을 연장한 모델(이하 encoder based model)
   - self attention layer는 행렬곱 및 내적의 연장이기 때문에, 병렬계산이 가능하고 parameter 수가 같다면 MLP에 비해 연산이 빠름
-  - attention layer를 적극적으로 이용한 Transformer[[2]][(VSPU17)]는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
+  - attention layer를 적극적으로 이용한 Transformer[<sub>[2]</sub>][(VSPU17)]는 문장에서 맥락을 수치화하여 파악하는데 효과적인 성능을 보이고 있음
   - 이번 과제도 단어가 나열됐을 때 형성되는 맥락과 관련되어 있다 이해할 수 있기 때문에, encoder-only Transformer 모델이 효과적일 수 있을 것이라 예상
 - attention based encoder 내부에 Transformer에서 사용된 encoder submodule을 N=6층 쌓고, 3층의 MLP를 연장
 - **[attention based encoder](./module_aladin/attention_based_model.py)** : (*batch_size*, 60) $\rightarrow$ (*batch_size*, *d_model* , 60)
@@ -333,7 +333,7 @@
   - $-3\leq d \leq 3 \text{ and } d \neq 0$ 조건을 만족하는 $d$에 대해 시뮬레이션. $0.01$ 간격으로 $d$ 값을 설정
   - 도표.11의 7개의 *init_lr* 중 1.76e-4를 제외한 6개의 *init_lr*에 대해서 추정
     - *init_lr*=1.76e-4의 경우 총 *epoch*가 550으로 제한된 영향을 받았기 때문
-- 위 조건을 만족하는 $d$에 대해 *init_lr*으로 *best_epoch*<sup>$d$</sup>를 선형회귀 했을 때, $d=0.52$일 때 $R^2$ Score가 0.536로 제일 큼
+- 위 조건을 만족하는 $d$에 대해 *init_lr*으로 *best_epoch*<sup>*d*</sup>를 선형회귀 했을 때, $d=0.52$일 때 $R^2$ Score가 0.536로 제일 큼
 
     ![reg1](./imgs/regrslt1.png)
   
