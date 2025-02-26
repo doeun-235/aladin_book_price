@@ -624,7 +624,7 @@
 - 이에 encoder based model일 때 RMSE도 가장 작게 나왔음
 - batch size 20480 기준, A100으로 encoder based model 학습시 550epoch에 약 1시간 걸림. init_lr = 4.46e-4 기준, best epoch의 median이 243, q3가 283.5인 것을 감안하면, 300 epoch로도 충분할 것으로 예상 (약 36분)
   - 4.46e-4~5.54e-4 중 정한다면 *init_lr*의 차이로 성능을 개선하고자 하는 것은 큰 의미가 없을 수 있음.
-- $-1<d<1, d\neq0$에 대해 *init_lr*과 *best_epoch<sup>d</sup>* 사이 선형관계를 가짐. 다만, 각각의 *init_lr*에 대한 *best_epoch*의 표준편차가 크기 때문에 d를 더 좁히는 것은 현 데이터로는 과하다 판단.
+- $-0.75\leq d \leq 0.75, d\neq0$에 대해 *init_lr*과 *best_epoch<sup>d</sup>* 사이 높은 성적을 갖는 선형회귀 모델을 찾을 수  있음. 다만, 각각의 *init_lr*에 대한 *best_epoch*의 표준편차가 크고 *init_lr*의 개수가 적으며, 이를 위한 validation/test set을 충분히 구성하지는 못했기 때문에 d를 더 좁히는 것은 과한 추측일 수 있음.
 
 ## 8. 결론 및 한계
 
