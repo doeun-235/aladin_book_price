@@ -323,7 +323,7 @@
 #### *init_lr*과 *best_epoch* 사이 관계
 
 - 위 실험에서는 *patience* 만큼 *score*의 개선이 없으면 *factor* 배 *learning rate*를 감소시키는 scheduling을 사용
-- *learning rate*를 지수적으로 감소시키는 scheduling을 VSPU17에서 사용된 scheduling은 큰 차이가 있기 때문에 <i>수식 1[<sub>[2]</sub>][(VSPU17)]</i>과 직접적인 비교는 쉽지 않음
+- *learning rate*를 지수적으로 감소시키는 scheduling을 [VSPU17][(VSPU17)]에서 사용된 scheduling은 큰 차이가 있기 때문에 <i>수식 1[<sub>[2]</sub>][(VSPU17)]</i>과 직접적인 비교는 쉽지 않음
   - Transformer 모델 제안 논문에서는 <i>수식 1</i>과 같이 <i>step_num<sup>-0.5</sup></i>에 비례하여 *learning_rate*를 변화시킴
 
     ![eq](./imgs/equation.png)
@@ -635,29 +635,41 @@
   - parameter 양자화를 하면, 학습 및 추론 속도도 향상될 수 있음
 - 정가 예측에 큰 도움을 줄 수 있는 추가적인 정보(제본 형태, 쪽수 등)를 데이터셋에 추가하지 않고 학습 진행
   - 현 실험에서 hyperparmeter 조정하는 것보다 해당 데이터 추가하는 것이 성적 향상에 더 큰 영향을 줄 것으로 예상
-- Attention을 이용한 다양한 모델, 특히 attention layer로만 구성된 모델을 이용한 학습을 시도해보지 못함
+- MLP와 혼합하지 않은 Transformer 모델을 이용한 학습을 시도해보지 못함
 - 행렬 계산을 이용한 Transformer 모델이 연산속도 측면에서 갖는 장점을 충분히 활용했는지 평가 필요
   - *d_model*의 값이 커도 모델의 step 당 연산 속도에 큰 영향을 주지 않는 것이 연산 속도 측면에서 큰 장점
   - *d_model*의 값이 크면 parameter의 개수가 많아지므로, 원활한 학습에 필요한 데이터 양, step 등이 커질 수 있음
   - 따라서 *d_model*의 값을 설정할 때 한계가 있는 상황인데, 데이터 셋을 확장하는 등 *d_model*을 늘려도 괜찮을 수 있는 조사를 하지 않음
+- *best_epoch*<sup>*d*</sup> 회귀 예측에서 train/validation/test set으로 나눌 수 있을 정도로 다양한 *init_lr*에 대한 조사를 진행하지 못 했음
 - 저자명, 출판사를 인코딩 중 기타 항목으로 처리할 때 threshold 기준의 구체적인 근거를 제시하지 못 함
   - 추가적인 조사를 통해 더 객관적이고 제시 가능한 근거 확립 가능
 
 ## 9. 추후 과제
 
+#### 성능 개선
+
 - 출간 연도 등으로 stratify하여 학습할 때 성능을 높히는 것이 가능한지 확인
 - *d_model*, *d_ff*, *head*, *N* 등의 모델 구조 관련 hyperparameter를 변경했을 때 성능이 어떻게 달라지는지 확인
-- *d*의 범위를 더 좁히기 위해 할 수 있는 추가적인 조사
-  - 선행 연구 및 관련 참고자료 조사
-  - *batch_size*에 따른 변화 추적
-  - 더 다양한 scale의 *init_lr*에서 조사
-- *d_model*, *batch_size* 등이 *best_epoch*에 끼치는 영향을 확인
-- MLP와 혼합하지 않은 모델 개발 및 성능 비교
+- MLP와 혼합 하지 않은 encoder-only-transformer 모델 개발 및 성능 비교
   - 단어 corpus를 다른 열의 내용에 대하여도 확장
   - 혹은 다른 embedding model로 vector화 된 정보들이 섞여있을 경우 학습에 주의 할 점 조사
 - 데이터를 보강하여 학습에 수월한 질 좋은 데이터셋 구성
   - 도서 정보 페이지에 정보 중, 도서 정가에 직접적인 영향을 주는 다른 정보(제본형태, 쪽수 등)를 추가적으로 크롤링
   - 베스트 셀러에 포함된 적 없는 도서도 대상으로 하기 위한 크롤링 방법 개발 필요
+
+#### best_epoch 분포 관련
+
+- 선행 연구 및 관련 참고자료 조사
+- 단일 조건에서 *best_epoch*의 분포에 대한 추가적인 조사
+  - median 등을 안정적으로 예측하기 위해서 몇 번 정도의 시행이면 충분할지 조사
+- *best_epoch*<sup>*d*</sup> 회귀에서 *d*의 범위를 좁히기 위해 할 수 있는 조사
+  - *batch_size*에 따른 변화 추적
+  - 더 다양한 scale의 *init_lr*에서 조사
+    - *init_lr* 등으로 validation/test set을 구성해 회귀 정확도 평가
+- *d_model*, *batch_size* 등이 *best_epoch*에 끼치는 영향을 확인
+
+#### 기타
+
 - 위의 모델 외에도 다양한 모델 개발 가능
   - 카테고리와 도서 명, 출판사, 정가 등의 정보로 출간 연도 예측
   - 도서 정보 및 중고 시장에서의 가격을 바탕으로 알라딘의 SalesPoint 산정법 추정
