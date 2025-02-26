@@ -401,7 +401,7 @@
 
   ![regrslt0](./imgs/reg_rslts_plot0.png)
 
-  *<b>도표.29</b> init_lr과 best epoch과 사이 산포도 및 회귀선*
+  *<b>도표.29</b> init_lr별 best epoch의 산포도 및 회귀선*
 
 - test : 1.76e-4의 median, mean에 대해 비교
 
