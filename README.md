@@ -668,11 +668,13 @@
 ## 10. 참고문헌
 
 1. [OLPJ24][(OLPJ24)] : Doeun Oh, Junseong Lee, Yerim Park, and Hongseop Jeong, 알라딘 중고 도서 데이터셋 구축 및 그에 기반한 중고 서적 가격 예측 모델, GitHub, 2024
-2. [VSPU17][(VSPU17)]: Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
-3. [K19][(K19)]: hyunwoongko, transformer, GitHub, 2019
-4. [Monte Carlo Method, Wikipedia](https://en.wikipedia.org/wiki/Monte_Carlo_method)
-5. [Linear regression, Wikipedia](https://en.wikipedia.org/wiki/Linear_regression)
+2. [VSPU17][(VSPU17)] : Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
+3. [K19][(K19)] : hyunwoongko, transformer, GitHub, 2019
+4. [BE24][(BE24)] : Bryce and Eddie, 딥 러닝을 이용한 자연어 처리 입문, Wikidocs, 2024
+5. [Monte Carlo Method, Wikipedia](https://en.wikipedia.org/wiki/Monte_Carlo_method)
+6. [Linear regression, Wikipedia](https://en.wikipedia.org/wiki/Linear_regression)
 
 [(OLPJ24)]:https://github.com/kdt-3-second-Project/aladin_usedbook "OLPJ24"
 [(VSPU17)]:https://arxiv.org/abs/1706.03762 "VSPU17"
 [(K19)]:https://github.com/hyunwoongko/transformer/tree/master "K19"
+[(BE24)]:https://wikidocs.net/book/2155
