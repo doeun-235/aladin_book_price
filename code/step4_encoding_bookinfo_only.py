@@ -103,16 +103,32 @@ if __name__=='__main__':
     
     mecab = Mecab()
     tokenizer_basic = lambda x : mecab.morphs(x)
+    cut_date = lambda x : [x[:4],x[4:6],x[6:]]
     #apply tokenizer
     cols_tknz = ['Category','BName','BName_sub']
-    cols_freq = ['Author','Publshr','store']
+    cols_freq = ['Author','Publshr']
     for mode, bookinfo in book_dict.items():
         for col in cols_tknz:
             bookinfo[col] = bookinfo[col].fillna('').apply(tokenizer_basic)
-        book_dict[mode] = bookinfo    
+        bookinfo['Pdate'] = bookinfo['Pdate'].astype(str).apply(cut_date)
+        book_dict[mode] = bookinfo
     
     #make encoding map
     bookinfo = book_dict['train']
+    
+    #아래 ths 는 EDA 결과 제가 자의적으로 정한 내용
+    ths_author = int(np.round(len(bookinfo)/500)*75)
+    ths_publshr = int(np.round(len(bookinfo)/500)*5)
+    
+    map_author_encode = make_author_encode_map(bookinfo[['Author','SalesPoint']],ths_author)
+    map_publshr_encode = make_publshr_encode_map(bookinfo['Publshr'],ths_publshr)
+    
+    encode_maps = {
+        'Author' : lambda x : encode_tokens(map_author_encode,x,oov=False),
+        'Publshr' : lambda x : encode_tokens(map_publshr_encode,x,oov=False),
+    }
+    
+    bookinfo[cols_tknz]
     book_tknzed = bookinfo[cols_tknz].to_dict('series')
     book_name, book_subname, category = book_tknzed['BName'], book_tknzed['BName_sub'],book_tknzed['Category']
     tokens = np.array(list(itertools.chain(*book_name.values,*book_subname.values,*category.values)))
@@ -121,19 +137,7 @@ if __name__=='__main__':
     map_token_encode = make_encoding_by_freq(token_freq,size_feat=32000)
     encode_1line =lambda x: list(map(lambda y : encode_tokens(map_token_encode,y),x))
     
-    #아래 ths 는 EDA 결과 제가 자의적으로 정한 내용
-    ths_author = int(np.round(len(book_name)/500)*75)
-    ths_publshr = int(np.round(len(book_name)/500)*5)
     
-    map_author_encode = make_author_encode_map(bookinfo[['Author','SalesPoint']],ths_author)
-    map_publshr_encode = make_publshr_encode_map(bookinfo['Publshr'],ths_publshr)
-    map_store_encode = make_store_encode_map(data['train']['X']['store'])
-    
-    encode_maps = {
-        'Author' : lambda x : encode_tokens(map_author_encode,x,oov=False),
-        'Publshr' : lambda x : encode_tokens(map_publshr_encode,x,oov=False),
-        'store' : lambda x : encode_tokens(map_store_encode,x,oov=False)
-    }
 
     maxlens={
         'Category' : 5,
