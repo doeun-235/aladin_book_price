@@ -33,6 +33,8 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 os.environ["TORCH_USE_CUDA_DSA"] = '1'
 
+CORPUS_SIZE = 33800
+
 # GPU device setting
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -198,18 +200,20 @@ class BasicEncoder(nn.Module):
   def forward(self,x):
     pos_encoding = self.dropout(self.pos_encoding(x))
     batch_size,_,_ = x.size()
+    
     pos_encoding=pos_encoding.unsqueeze(dim=0).repeat(batch_size,1,1)
     x = x + pos_encoding
-
+    
     for encoder in self.encoding_layers:
       x,attention_score = encoder(x,None)
-
+    
+    
     return x
 
 class EncoderWithEmbedding(BasicEncoder):
-  def __init__(self,n_input,d_model,head,d_ff,max_len,dropout,n_layers,device):
+  def __init__(self,n_input,d_model,head,d_ff,max_len,dropout,n_layers,device,corpus_size=CORPUS_SIZE):
     super().__init__(n_input,d_model,head,d_ff,max_len,dropout,n_layers,device)
-    self.input_emb = nn.Embedding(32050,d_model,padding_idx = None)
+    self.input_emb = nn.Embedding(corpus_size,d_model,padding_idx = None)
 
   def forward(self,x):
     input_emb = self.dropout(self.input_emb(x))

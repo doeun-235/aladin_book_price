@@ -52,7 +52,7 @@
     - 총 158,084 종의 도서에 대한 정보로 구성되어 있음
   - **날짜, 랭킹** : 해당 도서가 어떤 주차의 주간 베스트셀러 목록에 몇 위로 올랐는지
     - 하나의 도서가 다양한 주 차에서 다양한 랭킹의 베스트셀러로 등장
-  - [**ISBN13, 부가기호**](https://blog.aladin.co.kr/ybkpsy/959340) : ISBN13은 전세계에서 공통적으로 사용하는 도서에 대한 id. 발행자 등의 정보가 포함되어 있음. 부가기호는 한국 문헌 보호 센터에서 부여하는 번호로, 예상 독자층에 대한 정보 등이 포함 되어 있음
+  - [**ISBN13, 부가기호**](https://blog.aladin.co.kr/ybkpsy/959340) : ISBN13은 전세계에서 공통적으로 사용하는 도서에 대한 id. 발행자 등의 정보가 포함되어 있음. 부가기호는 한국 문헌 번호 센터에서 부여하는 번호로, 예상 독자층에 대한 정보 등이 포함 되어 있음
   - **카테고리** : 도서가 어떤 장르에 속하는지에 대한 정보. 외국어, 종교, 사회과학, 건강/취미 등 총 24개 유형으로 분류
   - **세일즈 포인트**
     - 판매량과 판매기간에 근거하여 해당 상품의 판매도를 산출한 알라딘만의 판매지수이며, 매일 업데이트 됨
@@ -136,6 +136,7 @@
   ![image](https://github.com/user-attachments/assets/f4a98000-345b-4695-a2e8-0fbfff784d68)
 
   *<b>도표.4</b> 전처리, 스케일링 후 최종 데이터 예시*
+<!--TODO : usedbook에서의 데이터로 되어있음. 업데이트 필요-->
 
 ## 5. 실험 설계
 
@@ -668,11 +669,13 @@
 ## 10. 참고문헌
 
 1. [OLPJ24][(OLPJ24)] : Doeun Oh, Junseong Lee, Yerim Park, and Hongseop Jeong, 알라딘 중고 도서 데이터셋 구축 및 그에 기반한 중고 서적 가격 예측 모델, GitHub, 2024
-2. [VSPU17][(VSPU17)]: Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
-3. [K19][(K19)]: hyunwoongko, transformer, GitHub, 2019
-4. [Monte Carlo Method, Wikipedia](https://en.wikipedia.org/wiki/Monte_Carlo_method)
-5. [Linear regression, Wikipedia](https://en.wikipedia.org/wiki/Linear_regression)
+2. [VSPU17][(VSPU17)] : Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, Lukasz and Polosukhin, Illia, Attention is All you Need, Advances in Neural Information Processing Systems, 30, 2017
+3. [K19][(K19)] : hyunwoongko, transformer, GitHub, 2019
+4. [BE24][(BE24)] : Bryce and Eddie, 딥 러닝을 이용한 자연어 처리 입문, Wikidocs, 2024
+5. [Monte Carlo Method, Wikipedia](https://en.wikipedia.org/wiki/Monte_Carlo_method)
+6. [Linear regression, Wikipedia](https://en.wikipedia.org/wiki/Linear_regression)
 
 [(OLPJ24)]:https://github.com/kdt-3-second-Project/aladin_usedbook "OLPJ24"
 [(VSPU17)]:https://arxiv.org/abs/1706.03762 "VSPU17"
 [(K19)]:https://github.com/hyunwoongko/transformer/tree/master "K19"
+[(BE24)]:https://wikidocs.net/book/2155 "BE24"

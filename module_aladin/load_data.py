@@ -56,7 +56,7 @@ def generate_dataset(data_dict,crop_idx=[-1]):
   dataset = defaultdict(dict)
   for mode, data in data_dict.items():
     X, y = data['X'], data['y']
-    X = make_cropped_data(crop_idx,X)
+#    X = make_cropped_data(crop_idx,X)
     X_torch, y_torch = torch.tensor(X),torch.tensor(y)
     dataset[mode] = TensorDataset(X_torch.to(torch.float32),y_torch.to(torch.float32))
   return dataset
