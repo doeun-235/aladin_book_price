@@ -136,6 +136,7 @@
   ![image](https://github.com/user-attachments/assets/f4a98000-345b-4695-a2e8-0fbfff784d68)
 
   *<b>도표.4</b> 전처리, 스케일링 후 최종 데이터 예시*
+<!--TODO : usedbook에서의 데이터로 되어있음. 업데이트 필요-->
 
 ## 5. 실험 설계
 
