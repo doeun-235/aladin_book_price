@@ -133,9 +133,9 @@
   - 도서 명(BName, BName_sub)과 카테고리는 이후 Embedding model에 학습시켜야 하므로 정수형 데이터를 가져야 함
   - 그 외의 열에 대해서는 attention layer를 적용하지 않기로 결정하여 scaling 진행
 
-  ![image](https://github.com/user-attachments/assets/f4a98000-345b-4695-a2e8-0fbfff784d68)
+  ![encoding](./imgs/encoding_eg.png)
 
-  *<b>도표.4</b> 전처리, 스케일링 후 최종 데이터 예시*
+  *<b>도표.4</b> tokenize 및 encoding 예시*
 <!--TODO : usedbook에서의 데이터로 되어있음. 업데이트 필요-->
 
 ## 5. 실험 설계
